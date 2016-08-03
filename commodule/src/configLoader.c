@@ -44,6 +44,7 @@ int
 summerComModuleLoadConfig(){
 	FILE* config_fp = fopen("../sysconf/config/config.ini", "r");
 	if(config_fp == NULL){
+		fclose(config_fp);
 		return -1;
 	}
 	else{
@@ -76,6 +77,7 @@ summerComModuleLoadConfig(){
 				}
 			}
 		}
+		fclose(config_fp);
 		return 0;
 	}
 }
