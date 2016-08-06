@@ -95,13 +95,3 @@ void logInitMethods(){
 }
 
 
-int main(){
-	logInitMethods();	
-	logger.init("test", "../../log/log.log");
-	logger.log(1, "this is a log");
-	logger.close();
-	return 0;
-}
-
-
-

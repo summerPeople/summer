@@ -1,6 +1,13 @@
 #ifndef LOGGER_INT_H
 #define LOGGER_INT_H
 
+#include "logger.h"
+
+/*
+ * functions to init logger
+ */
+void logInitMethods();
+
 /*
  * the global logger
  */
