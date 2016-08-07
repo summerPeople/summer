@@ -3,4 +3,5 @@
  */
 
 typedef int page_no;
+typedef int32_t Size
 
