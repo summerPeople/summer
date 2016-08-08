@@ -1,7 +1,7 @@
 #ifndef LOGGER_INT_H
 #define LOGGER_INT_H
 
-#include "logger.h"
+#include "../commodule/src/logger.h"
 
 /*
  * functions to init logger
@@ -22,7 +22,7 @@ extern Logger logger;
  * according to DEBUG to log or not
  */
 #ifdef DEBUG
-#define LOG(x, y) (logger.log((x), (y)))
+#define LOG(x, y) (logger.log(x, y))
 #else
 #define LOG(x, y) 
 #endif

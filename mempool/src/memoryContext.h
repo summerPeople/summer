@@ -67,7 +67,7 @@ typedef struct MemoryContext{
 	char* name;                                //name of the context
 	Block* blocks;                             //blocks belongs to this context
 	BigBlock* big_blocks;                      //big blocks belongs to this context
-}MemoryContext
+}MemoryContext;
 
 #endif
 
