@@ -84,7 +84,7 @@ alloc a MemPage in the MemoryPool
 n means the nth diskPage needed to be stored in MemoryPool,页号
 memp is a point to the context of the diskPage
 */
-void * allocPage(int n,void *memp){
+void * allocPage(int n){
 	//LOG(DEBUG,[内存池],"进入allocPage");
 	flag=0;
 	if(p==NULL) {

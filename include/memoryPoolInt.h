@@ -6,7 +6,7 @@ the header file of the MemeryPool for interface
 
 void *allocMemoryPool();
 
-void allocPage(int n,void * memp);
+void *allocPage(int n);
 
 void printMemoryAlloc();
 

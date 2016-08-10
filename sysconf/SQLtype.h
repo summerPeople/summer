@@ -5,13 +5,13 @@
 #ifndef SQLTYPE
 #define _SQLTYPE_H
 
-#define CDB 0
-#define CTB 1
-#define DDB 2
-#define DTB 3
-#define SEL 4
-#define INS 5
-#define DEL 6
-#define UPD 7
+#define CDB 2
+#define CTB 3
+#define DDB 4
+#define DTB 5
+#define SEL 6
+#define INS 7
+#define DEL 8
+#define UPD 9
 
 #endif
