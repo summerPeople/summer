@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "memoryPool.h"
+#include "pagerInt.h"
+#include "fileopInt.h"
+#include "../../sysconf/type.h"
 //#include "loggerInt.h"
 
 //keep a link of usedMemPage,while using array to record the free MemPage in memorypool
@@ -9,11 +12,11 @@
 create BST tree if needed
 */
 void insertBST(useNode* *p,useNode * newNode){
-        if((*p)== NULL){
+        if((*p)== NULL){ 
  		*p = newNode;
                 (*p)->lchild = NULL;
                 (*p)->rchild = NULL;
-                return ;
+                 return ;
         }
         int diskNum = newNode->diskPage;
         if(diskNum<(*p)->diskPage)
@@ -30,13 +33,12 @@ useNode * preOrderTraverse(useNode * T,int n){
         if(T&&!flag){
 		//printf("进入先序遍历查找BST,T = %d \n",T->diskPage);
 		//LOG(DEBUG,“[内存池]|BST树查找磁盘页号，BST树先序遍历");
-                if(T->diskPage == n)
-                        {
-			flag = 1; //find 
+                if(T->diskPage == n){
+					flag =  1; //find 
 		//	printf(" T=%p\n",p+PAGESIZE*T->memPage);
 		//	printf("  T->diskPage= %d\n",T->diskPage);
 		//	printf("  T->memPage = %d \n",T->memPage);
-			return T;
+					return  T;
 			}
 		else {
               		 tmp = preOrderTraverse(T->lchild,n);
@@ -53,7 +55,7 @@ p means the point to the MemoryPool
 useHead means the head of the used link
 freeArray means the free memPage in MemoryPool
 */
-void * allocMemoryPool(){
+void * allocMemPool(){
 	//LOG(DEBUG,  "[内存池]，调用分配内存池函数");
 	p=(void *) malloc(sizeof(char)*PAGESIZE*POOLSIZE);
 	useHead=(uHead *)malloc (sizeof(uHead));
@@ -64,19 +66,22 @@ void * allocMemoryPool(){
 	freeHead->end = NULL;
 	int i=0;
 	for(i=0;i<POOLSIZE;i++){
+		change_flag[i]=0;
+		} 
+	for(i=0;i<POOLSIZE;i++){
 		freeNode * newFreeNode = (freeNode *)malloc (sizeof(freeNode));
 		newFreeNode->freeMemPage = i;
 		newFreeNode->next = NULL;
 		if(freeHead->next==NULL){
 	 		freeHead->next = newFreeNode;
 			freeHead->end = newFreeNode;
-			}
+		 	}
 		else {
 			freeHead->end->next = newFreeNode;
-	 		freeHead->end = newFreeNode;
+	 	 	freeHead->end = newFreeNode;
 	 	}
 	}
-	return p;	
+	return p ;	 
 }
 
 /*
@@ -84,8 +89,8 @@ alloc a MemPage in the MemoryPool
 n means the nth diskPage needed to be stored in MemoryPool,页号
 memp is a point to the context of the diskPage
 */
-void * allocPage(int n){
-	//LOG(DEBUG,[内存池],"进入allocPage");
+void * allocMemPoolPage(page_no n){
+ 	//LOG(DEBUG,[内存池],"进入allocPage");
 	flag=0;
 	if(p==NULL) {
 		allocMemoryPool();
@@ -95,9 +100,9 @@ void * allocPage(int n){
 	useNode *curUse = preOrderTraverse(T,n);
 	//printf("curUse= %p\n",curUse);
 	if(curUse!=NULL ){
-		if(curUse->next !=NULL){
-			if(curUse->last!=NULL){
-				curUse->next->last = curUse->last;
+ 		if(curUse->next !=NULL){
+ 			if(curUse->last!=NULL){
+ 				curUse->next->last = curUse->last;
 				curUse->last->next = curUse->next;
 				curUse->last = useHead->end;
 				useHead->end->next = curUse;
@@ -139,31 +144,36 @@ void * allocPage(int n){
 				newUseNode->last = NULL;
 			 	useHead->next = newUseNode;
 				useHead->end = newUseNode;
-				insertBST(&T,newUseNode);
+	 			insertBST(&T,newUseNode);
 			}
-   			useHead->end= newUseNode;
+   			useHead->end = newUseNode;
 				
 			//*(int *)(p+PAGESIZE*curFreeNode->freeMemPage)=n;
 			free(curFreeNode);
 			//LOG(DEBUG,"[内存池]|分配函数，新分配一个内存池中的页”);
+			summerPagerRead(n,p+PAGESIZE*curFreeNode->freeMemPage);
 			return p+PAGESIZE*curFreeNode->freeMemPage;
-		 	}
+	 	 	}
 	//no free page left ,use LRU to substitute	
 	else {
-		 useHead->next->diskPage = n;
+		useHead->next->diskPage = n;
+		int mem_num=useHead->next->memPage;
+		if(chang_flag[mem_num]!=0)
+			pager.writePage(useHead->next->diskPage,p+PAGESIZE*mem_num);
 		// *(int *)(p+PAGESIZE*useHead->next->memPage)=n;
 		//LOG(DEBUG,"[内存池]|分配函数，替换内存池最久未用的页");
-		return p+PAGESIZE*useHead->next->memPage;
-	} 
+		summerPagerRead(n,p+PAGESIZE*useHead->next->memPage);
+	 	return p+PAGESIZE*useHead->next->memPage;
+	}  
 //	return; 
 }
 
 /*
 print the allocation of the MemeryPool
 */
-void printMemoryAlloc(){
-	if(p==NULL){
-		//printf("no MemoryPool !\n");
+void printMemPoolAlloc(){
+	if(p= =NULL){
+		// printf("no MemoryPool !\n");
 		//LOG(DEBUG,"[内存池]，打印内存分配");
  		return;
 	}
@@ -180,19 +190,23 @@ void printMemoryAlloc(){
 /*
 free the memory of the MemoryPool and the linklist of the used memPage
 */
-void freeMemoryPool(){
+void freeMemPool(){
 	//LOG（DEBUG，”[内存池]|释放函数，释放整个内存池空间以及已用链表
 	if(p!=NULL)
 		free(p);
 	useNode * curNode = useHead->next;
 	useNode * temp;
 	while(curNode!=NULL)
-		{
+		{ 
 		  temp = curNode->next;
                   free(curNode);
 		  curNode = temp;
 	 	} 
 	if(useHead!=NULL)
-	 	free(useHead); 
+	 	free (useHead); 
 }
 
+void setMemPoolFlag(void *mpp){
+	int n = (mmp-p)/PAGESIZE;
+	change_flag[n]=1;
+}

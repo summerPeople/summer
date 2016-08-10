@@ -40,4 +40,5 @@ fHead * freeHead;
 void *p ;
 //int freeArray[POOLSIZE+2];
 int flag;
+int change_flag[POOLSIZE];
 #endif
