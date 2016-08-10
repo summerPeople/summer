@@ -1,5 +1,7 @@
 #include "configLoaderInt.h"
 #include "loggerInt.h"
+#include "memoryContextInt.h"
+#include "pagerInt.h"
 
 /*
  * function to init the application
@@ -13,6 +15,12 @@ int appInit(){
 	//init logger
 	logInitMethods();
 	logger.init("global", "../../log/log.log");
+
+	//init MemoryContext
+	summerCreateMemoryContext("main", 8*1024, 0);
+
+	//init pager
+	summerPagerCreatePager();
 
 	return 0;
 }

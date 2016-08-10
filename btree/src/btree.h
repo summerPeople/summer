@@ -32,6 +32,7 @@ typedef struct MemPage{
 	void* page_space;                        //where is the page in memory
 	int16_t cell_num;                        //how many cell in the page
 	int16_t offsets[];                       //an array stores offsets of tuples 
+	uint8_t is_modify;                       //is the page modified
 	datapage_head_info* header;              //page header struct
 }MemPage;
 
@@ -41,7 +42,7 @@ typedef struct MemPage{
 typedef struct BtCursor{
 	MemPage* current_page;                   //page that the corsur points to now
 	int16_t cell_index;                      //index in MemPage.offsets
-	page_no trace[BTREE_MAX_DEEP];           //those pages the cursor has moved
+	MemPage* trace[BTREE_MAX_DEEP];           //those pages the cursor has moved
 }BtCursor;
 
 /*

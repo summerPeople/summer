@@ -5,4 +5,9 @@
 
 extern Pager pager;
 
+/*
+ * functions interface
+ */
+void summerPagerCreatePager();
+
 #endif

@@ -24,7 +24,7 @@ int findFreeListIndex(Size size){
 /*
  * function to create the context,flags has not been used now
  */
-MemoryContext* createMemoryContext(char* name, Size size, int8_t flags){
+void summerCreateMemoryContext(char* name, Size size, int8_t flags){
 	MemoryContext* context = (MemoryContext*)malloc(sizeof(MemoryContext));
 	assert(context != NULL);
 	
@@ -52,7 +52,7 @@ MemoryContext* createMemoryContext(char* name, Size size, int8_t flags){
 		(context->free_list)[i].free_list = NULL;
 	}
 
-	return context;
+	memoryContext = context;	
 }
 
 /*
