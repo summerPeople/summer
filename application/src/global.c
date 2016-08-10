@@ -5,7 +5,14 @@
 
 /*
  * file pointer of the database file we open,
- * it will be assigned wher open file
+ * it will be assigned when open file
  */
-FILE* fp
+FILE* fp = NULL;
+
+/*
+ * fp setter
+ */
+void summerSetFP(FILE* file_ptr){
+	fp = file_ptr;
+}
 

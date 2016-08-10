@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <math.h>
 
+MemoryContext* memoryContext;
+
 /*
  * find request size in which freelist
  */
