@@ -1,7 +1,8 @@
 /*
 	data structures used in the arrangement of dbfile
 */
-#include<stdio.h>
+#ifndef PAGE_H
+#define PAGE_H
 /*
  dbfile headinfo, exist only in the start page of the dbfile
  */
@@ -19,7 +20,7 @@ typedef struct{
 	void *phead;			//the headnode point32_ter of the free page
 	int32_t free_page_sum;		//the count of the free page
 	int32_t unused7[16];		//reserved
-}file_head;
+}File_head;
 
 /*
  	page headinfo, exist in every page of the dbfile
@@ -35,17 +36,24 @@ typedef struct{
 		void *next;			//type = SPECIAL,it indicates the next page of the special table
 		int32_t page_no;		//type != SECIAL, it indicates the rightmost son of the inner node 
 	}u;
-}head_info;
+}Data_page_head;
 
 typedef struct{
 	page_no pageno;			//if the tuple has been deleted, it will be -1
 				   			//if the tuple has been updated, it will indicate the new page_no
 							//of the tuple
 							//in other cases, it will be 0
+	int64_t rowid;			//tuple's row id
 	unsigned int16_t column_count
 	int *length
 
-}
-#define SPECIAL 0;
+}Tuple_head;
+#define SPECIAL 1
+#define INNER 2
+#define LEAF 3
 
 
+#define DPHSIZE 15
+#define FHSIZE 100
+
+#endif

@@ -1,14 +1,15 @@
 //*********************************************************
 /*
-statement:
- 
+statement: 
 */
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 #include"page.h"
 #include"../../sysconf/type.h"
+#include"configLoaderInt.h"
 
-/*
+/*  
    insert a tuple into a page in memmory
 	the first parameter is the address of the page
 	the second parameter is the address of a tuple
@@ -89,4 +90,36 @@ void getTuple(void *page_ptr, int16_t offset, tuple *temp)
 	temp->size = size;	
 }
 
+/*
+*** when create a database, this routin will init the file head Info
+*/
+void initFileHead(void *page_ptr)
+{
+	memset(page_ptr, 0, 100);
+	strcpy((char *)page_ptr, "summer v1.0");
+	*(int *)(page_ptr + 16) = config_info.page_size;
+}
 
+void getFileHead(void *page_ptr, File_head *ptr)
+{
+	strcpy(ptr->version_info, (char *)pager_ptr);
+	ptr->free_space_sum = *(int32_t *)(page + 36);
+}
+
+/*
+***Init the head of special table 
+*/
+void initSpecTablePageHead(void *page_ptr)
+{
+	*(unsigned char *)page_ptr = SPECIAL;
+	*(int16_t *)(page_ptr + 1) = 15;
+	*(int16_t *)(page_ptr + 3) = 0;
+	*(int16_t *)(page_ptr + 7) = 0;
+	*(int16_t *)(page_ptr + 9) = config_info.page_size - DHPSIZE;
+	*(int32_t *)(page_ptr + 11) = 0;
+}
+	
+void getDataPageHead(void *page_ptr, Data_page_head *ptr)
+{
+	
+}

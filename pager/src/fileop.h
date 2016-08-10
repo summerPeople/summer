@@ -2,7 +2,7 @@
 #define FILE_OP_H
 
 /* header file include here */
-#include "../sysconf/type.h"
+#include "../../sysconf/type.h"
 
 #include <stdio.h>
 

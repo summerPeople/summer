@@ -1,1 +1,0 @@
-void analyse(void *p);
