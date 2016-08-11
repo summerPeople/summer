@@ -93,7 +93,7 @@ void * allocMemPoolPage(page_no n){
  	//LOG(DEBUG,[内存池],"进入allocPage");
 	flag=0;
 	if(p==NULL) {
-		allocMemoryPool();
+		allocMemPool();
 	}
 	//useNode * curUse = useHead->next;
 	//find whther the nth diakPage is already in the MemoryPool
@@ -158,7 +158,7 @@ void * allocMemPoolPage(page_no n){
 	else {
 		useHead->next->diskPage = n;
 		int mem_num=useHead->next->memPage;
-		if(chang_flag[mem_num]!=0)
+		if(change_flag[mem_num]!=0)
 			pager.writePage(useHead->next->diskPage,p+PAGESIZE*mem_num);
 		// *(int *)(p+PAGESIZE*useHead->next->memPage)=n;
 		//LOG(DEBUG,"[内存池]|分配函数，替换内存池最久未用的页");
@@ -172,7 +172,7 @@ void * allocMemPoolPage(page_no n){
 print the allocation of the MemeryPool
 */
 void printMemPoolAlloc(){
-	if(p= =NULL){
+	if(p == NULL){
 		// printf("no MemoryPool !\n");
 		//LOG(DEBUG,"[内存池]，打印内存分配");
  		return;
@@ -207,6 +207,6 @@ void freeMemPool(){
 }
 
 void setMemPoolFlag(void *mpp){
-	int n = (mmp-p)/PAGESIZE;
+	int n = (mpp-p)/PAGESIZE;
 	change_flag[n]=1;
 }

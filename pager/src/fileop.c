@@ -2,7 +2,7 @@
 
 extern FILE* fp;
 
-extern summerSetFP(FILE* file_ptr);
+extern void summerSetFP(FILE* file_ptr);
 
 /*
  * open a specifical database file

@@ -12,7 +12,7 @@ Pager pager;
  * create a pager to use
  */
 void summerPagerCreatePager(){
-	pager.getPage = allocMemoryPoolPage;
+	pager.getPage = allocMemPoolPage;
 	pager.writePage = summerPagerWrite;
 	pager.openDbFile = summerPagerOpenDbFile;
 	pager.createDbFile = summerPagerCreateDbFile;

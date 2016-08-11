@@ -4,12 +4,12 @@
  * structs used by btree
  */
 #include "../../sysconf/type.h"
-#include "pagerInt.h"
+#include "../../pager/src/pager.h"
 #include "pageInt.h"
 #include "memoryContextInt.h"
 #include "configLoaderInt.h"
 
-#define BTEE_MAX_DEEP 10
+#define BTREE_MAX_DEEP 10
 
 /*
  * a cell stands for 
@@ -31,7 +31,7 @@ typedef struct MemPage{
 	page_no pageno;                          //page number in db file
 	void* page_space;                        //where is the page in memory
 	int16_t cell_num;                        //how many cell in the page
-	int16_t offsets[];                       //an array stores offsets of tuples 
+	int16_t* offsets;                        //an array stores offsets of tuples 
 	uint8_t is_modify;                       //is the page modified
 	Data_page_head* header;                  //page header struct
 }MemPage;
