@@ -4,7 +4,7 @@
  * pager class can handle all ops of page
  * btree use it to do anything about page
  */
-
+#include"../../sysconf/type.h"
 typedef struct Pager{
 	void* (*getPage)(page_no pageno);                       //get a page and return it , not memPage
 	MemPage* (*getMemPage)(void* page);                     //get a mempage and return it by using a page in mem 

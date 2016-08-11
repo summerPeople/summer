@@ -1,4 +1,4 @@
-#include "../comModule/src/configLoader.h"
+#include "../commodule/src/configLoader.h"
 
 extern Config_Info config_info;
 

@@ -16,7 +16,7 @@ void summerPagerOpendbFie(char* file_name){
  * create database file named file_name
  */
 void summerPagerCreateDbFile(char* file_name){
-	FILE* filr_ptr = fopen(file_name, "wb");	
+	FILE* file_ptr = fopen(file_name, "wb");	
 	summerSetFP(file_ptr);
 }
 

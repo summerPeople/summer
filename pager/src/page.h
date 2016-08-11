@@ -1,6 +1,7 @@
 /*
 	data structures used in the arrangement of dbfile
 */
+#include"../../sysconf/type.h"
 #ifndef PAGE_H
 #define PAGE_H
 /*
@@ -15,7 +16,7 @@ typedef struct{
 	char unused3;			//reserved
 	char unused4;			//reserved
 	char unused5;			//reserved
-	int32_t32_t modiy_count;		//the times of modifing
+	int32_t modiy_count;		//the times of modifing
 	int32_t unused6;			//reserved
 	void *phead;			//the headnode point32_ter of the free page
 	int32_t free_page_sum;		//the count of the free page
@@ -44,10 +45,10 @@ typedef struct{
 							//of the tuple
 							//in other cases, it will be 0
 	int64_t rowid;			//tuple's row id
-	unsigned int16_t column_count
-	int *length
+	int16_t column_count;
+	int *length;
 
-}Tuple_head;
+}Tuple_head; 
 #define SPECIAL 1
 #define INNER 2
 #define LEAF 3
