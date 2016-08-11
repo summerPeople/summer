@@ -40,7 +40,7 @@ int summerPagerRead(page_no pageno, void* page){
  * functions those can be used only in the layer
  */
 
-int pagerWrite(page_no pageno, void* page){
+page_no pagerWrite(page_no pageno, void* page){
 	int page_size = config_info.page_size; 
 	page_no write_page = -1;
 	if(pageno == -1){

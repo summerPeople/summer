@@ -7,6 +7,5 @@
 #include <stdio.h>
 
 extern FILE* fp;
-extern Config_Info config_info;
 
 #endif

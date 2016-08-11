@@ -20,7 +20,7 @@
  * it contains status info about the file
  */
 typedef struct BtShared{
-	file_head* file_header;                  //root page's page header info
+	File_head* file_header;                  //root page's page header info
 	Pager* pager;                            //it ops the page
 }BtShared;
 
@@ -33,14 +33,13 @@ typedef struct MemPage{
 	int16_t cell_num;                        //how many cell in the page
 	int16_t offsets[];                       //an array stores offsets of tuples 
 	uint8_t is_modify;                       //is the page modified
-	datapage_head_info* header;              //page header struct
+	Data_page_head* header;                  //page header struct
 }MemPage;
 
 /*
  * BtCursor struct,it points to where we are looking up
  */
 typedef struct BtCursor{
-	MemPage* current_page;                   //page that the corsur points to now
 	int16_t cell_index;                      //index in MemPage.offsets
 	MemPage* trace[BTREE_MAX_DEEP];           //those pages the cursor has moved
 }BtCursor;

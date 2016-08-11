@@ -1,4 +1,5 @@
 #include "btree.h"
+#include "memoryPoolInt.h"
 
 #include<stdlib.h>
 #include<assert.h>
@@ -7,7 +8,7 @@
 /*
  * it is a btree created when application is starting
  */
-Btree* btree = NULL;
+Btree* global_btree = NULL;
 
 /*
  * create a btree, but only one page, it is page0
@@ -17,13 +18,15 @@ Btree* summerBtreeCreateBtree(){
 	assert(btree != NULL);
 
 	//init memory pool
+	allocMemPool();
 
 	//create BtShared struct
 	BtShared* btShared = (BtShared*)malloc(sizeof(BtShared));
 	assert(btShared);
 	btShared->pager = &pager;
 	void* root_page = pager.getPage(0);            //get root page of the db file
-	btShared->file_header = pager.getDbFileHead(root_page);
+	File_head* file_header = (File_head*)malloc(sizeof(File_head));	
+	btShared->file_header = pager.getDbFileHead(root_page, file_header);
 
 	//create root MemPage
 	MemPage* page0 = pager.getMemPage(root_page);
@@ -31,11 +34,10 @@ Btree* summerBtreeCreateBtree(){
 	//create btree cursor
 	BtCursor* cursor = (BtCursor*)malloc(sizeof(BtCursor));
 	assert(cursor);
-	cursor->current_page = page0;
 	cursor->cell_index = 0;
-	(cursor->trace)[0] = 0;
+	(cursor->trace)[0] = page0;
 	for(int i = 1; i < BTREE_MAX_DEEP; i++){
-		(cursor->trace)[i] = -1;
+		(cursor->trace)[i] = NULL;
 	}
 
 	btree->btShared = btShared;
@@ -50,8 +52,12 @@ Btree* summerBtreeCreateBtree(){
  */
 void summerBtreeDelete(Btree* btree){
 	free(btree->btShared->file_header);
+	for(int i = 0; i <= btree->btCursor->cell_index; i++){
+		free((btree->btCursor->trace)[i]);
+	}
 	free(btree->btCursor);
 	//free mem pool
+	freeMemPool();
 }
 
 
@@ -96,24 +102,36 @@ page_no summerBtreeWriteFreeDataPage(){
 }
 
 /*
- *
+ * insert tuple into table
  */
-page_no summerBtreeInsert(char* table_name, ){
-	MemPage* first_page = NULL;
+page_no summerBtreeInsert(char* table_name, tuple* tuple_ptr){
+	//init Cursor to rootpage
+	BtCursor* cursor = global_btree->btCursor;	
+	cursor->cell_index = 0;
+	//find the second page
+	MemPage* special_page = NULL;
 	if(strcmp("_master", table_name) == 0){
-		first_page = pager.getMemPage(pager.getPage(1));
+		special_page = pager.getMemPage(pager.getPage(1));
 	}
 	else if(strcmp("_scheme", table_name) == 0){
-		first_page = pager.getMemPage(pager.getPage(2));
+		special_page = pager.getMemPage(pager.getPage(2));
 	}
 	else if(strcmp("_lock", table_name) == 0){
-		first_page = pager.getMemPage(pager.getPage(3));
+		special_page = pager.getMemPage(pager.getPage(3));
 	}
 	else if(strcmp("_sequence", table_name) == 0){
-		first_page = pager.getMemPage(pager.getPage(4));
+		special_page = pager.getMemPage(pager.getPage(4));
 	}
 	else{
 		MemPage* master_page = pager.getMemPage(pager.getPage(1));
+		cursor->cell_index++;
+		(cursor->trace)[cell_index] = master_page;
+		//in master table we find the first page of data table
+	}
+	//we insert into special table
+	if(special_page != NULL){
+		cursor->cell_index = 1;
+		(cursor->trace)[cell_index] = special_page;
 	}
 }
 

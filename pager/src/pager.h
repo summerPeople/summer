@@ -13,12 +13,11 @@ typedef struct Pager{
 	FILE* (*openDbFile)(char* file_name);                   //open db file
 	FILE* (*createDbFile)(char* file_name);                 //create a new db file
 
-	file_head* (*getDbFileHead)(void* root_page);           //get file header of the db file
+	void (*getDbFileHead)(void* root_page, File_head* ptr); //get file header of the db file
 
 	void (*getNewPage0)(void* space_ptr);                   //init space_ptr into a new page0
 	void (*getNewSpecPage)(void* space_ptr);                //init space_ptr into a new special page
 	void (*getDataPage)(void* space_ptr);                   //init space_ptr into a new data page
 }Pager;
 
-Pager* summerCreatePager();
 #endif
