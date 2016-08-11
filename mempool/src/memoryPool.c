@@ -156,7 +156,7 @@ void * allocMemPoolPage(page_no n){
 	 	 	}
 	//no free page left ,use LRU to substitute	
 	else {
-		u seHead->next->diskPage = n;
+		useHead->next->diskPage = n;
 		int mem_num=useHead->next->memPage;
 		if(change_flag[mem_num]!=0)
 			pager.writePage(useHead->next->diskPage,p+PAGESIZE*mem_num);
@@ -167,8 +167,6 @@ void * allocMemPoolPage(page_no n){
 		summerPagerRead(n,p+PAGESIZE*useHead->next->memPage);
 	 	return p+PAGESIZE*useHead->next->memPage;
 	}   
-//	return; 
-}
 
 /*
 print the allocation of the MemeryPool

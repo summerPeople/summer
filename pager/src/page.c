@@ -39,7 +39,8 @@ void insertTuple(void *page_ptr, tuple *tuple_ptr)
 	//update the free space size
 	head->fs_size = head->fs_size - tuple->size;
 	*/
-}
+} 
+
 /*
 	delete a tuple from a page in memory
 	the first parameter is the address of the page
@@ -62,6 +63,7 @@ void deleteTuple(void *page_ptr, int16_t offset)
 	}
 	*((int16_t *)(page_ptr + 7)) += length;
 } 
+
 /*
  	update the	tuple
  */ 
@@ -69,6 +71,7 @@ void updateTuple()
 {
 
 }
+
 /*
  	get a tuple
 	the first parameter is the address of the page
@@ -85,10 +88,10 @@ void getTuple(void *page_ptr, int16_t offset, tuple *temp)
 	int i = 0;
 	for(i = 0; i < n; i++){
 		size += *(p + i);
-	}
+ 	}
 	temp->ptr = tuple_ptr;
 	temp->size = size;	
-}
+} 
 
 /*
 *** when create a database, this routin will init the file head Info
@@ -98,28 +101,43 @@ void initFileHead(void *page_ptr)
 	memset(page_ptr, 0, 100);
 	strcpy((char *)page_ptr, "summer v1.0");
 	*(int *)(page_ptr + 16) = config_info.page_size;
-}
+} 
 
+/*
+***Get the dbfile head info 
+*/
 void getFileHead(void *page_ptr, File_head *ptr)
-{
+{ 
 	strcpy(ptr->version_info, (char *)page_ptr);
 	ptr->free_page_sum = *(int32_t *)(page_ptr + 36);
 }
 
 /*
-***Init the head of special table 
-*/
-void initSpecTablePageHead(void *page_ptr)
+***Init the head of data page 
+ */
+void initDataPageHead(void *page_ptr, char type)
 { 
-	*(unsigned char *)page_ptr = SPECIAL;
+	*(unsigned char *)page_ptr = type;
 	*(int16_t *)(page_ptr + 1) = 15;
 	*(int16_t *)(page_ptr + 3) = 0;
 	*(int16_t *)(page_ptr + 7) = 0;
 	*(int16_t *)(page_ptr + 9) = config_info.page_size - DPHSIZE;
 	*(int32_t *)(page_ptr + 11) = 0;
-}
-	
-void getDataPageHead(void *page_ptr, Data_page_head *ptr)
+} 
+
+/*
+***Get the data page head info 
+*/
+void getDataPageHead(void *page_ptr, Data_page_head *head)
 {
-	
+	head->type = *(char *)page_ptr;
+	head->start = *(int16_t *)(page_ptr + 1);
+	head->tuple_count = *(int16_t *)(page_ptr + 3);
+	head->fragment = *(int16_t *)(page_ptr + 7);
+	head->fs_size = *(int16_t *)(page_ptr + 9);
+	head->pageno = *(int *)(page_ptr + 11);
 }
+
+/*
+	 
+*/

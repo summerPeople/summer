@@ -4,7 +4,7 @@
  * structs used by btree
  */
 #include "../../sysconf/type.h"
-#include "../../pager/src/pager.h"
+#include "pagerInt.h"
 #include "pageInt.h"
 #include "memoryContextInt.h"
 #include "configLoaderInt.h"
