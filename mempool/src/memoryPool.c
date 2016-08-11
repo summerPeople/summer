@@ -158,8 +158,7 @@ void * allocMemPoolPage(page_no n){
 	else {
 		u seHead->next->diskPage = n;
 		int mem_num=useHead->next->memPage;
-
-		if(change_flag[mem_num]!=0){
+		if(change_flag[mem_num]!=0)
 			pager.writePage(useHead->next->diskPage,p+PAGESIZE*mem_num);
 			change_flag[mem_num]=1;
 			}

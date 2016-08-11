@@ -13,7 +13,7 @@ Btree* global_btree = NULL;
 /*
  * create a btree, but only one page, it is page0
  */
-Btree* summerBtreeCreateBtree(){
+void summerBtreeCreateBtree(){
 	Btree* btree = (Btree*)malloc(sizeof(Btree));
 	assert(btree != NULL);
 
@@ -26,7 +26,8 @@ Btree* summerBtreeCreateBtree(){
 	btShared->pager = &pager;
 	void* root_page = pager.getPage(0);            //get root page of the db file
 	File_head* file_header = (File_head*)malloc(sizeof(File_head));	
-	btShared->file_header = pager.getDbFileHead(root_page, file_header);
+	pager.getDbFileHead(root_page, file_header);
+	btShared->file_header = file_header;
 
 	//create root MemPage
 	MemPage* page0 = pager.getMemPage(root_page);
@@ -43,19 +44,19 @@ Btree* summerBtreeCreateBtree(){
 	btree->btShared = btShared;
 	btree->rootPage = page0;
 	btree->btCursor = cursor;
-
-	return btree;
+	
+	global_btree = btree;
 }
 
 /*
  * delete btree
  */
-void summerBtreeDelete(Btree* btree){
-	free(btree->btShared->file_header);
-	for(int i = 0; i <= btree->btCursor->cell_index; i++){
-		free((btree->btCursor->trace)[i]);
+void summerBtreeDelete(){
+	free(global_btree->btShared->file_header);
+	for(int i = 0; i <= global_btree->btCursor->cell_index; i++){
+		free((global_btree->btCursor->trace)[i]);
 	}
-	free(btree->btCursor);
+	free(global_btree->btCursor);
 	//free mem pool
 	freeMemPool();
 }
@@ -67,7 +68,7 @@ void summerBtreeDelete(Btree* btree){
  */
 void summerBtreeCreateDbFile(char* file_name){
 	//get a file name with postfix
-	char* db_file_name = (char*)calloc(5*sizeof(char) + strlen(file_name));
+	char* db_file_name = (char*)calloc(1, 5*sizeof(char) + strlen(file_name));
 	char* postfix_str = ".hot";
 	strcpy(db_file_name, file_name);
 	strcat(db_file_name, postfix_str);
@@ -94,7 +95,7 @@ void summerBtreeCreateDbFile(char* file_name){
  */
 page_no summerBtreeWriteFreeDataPage(){
 	int page_size = config_info.page_size;
-	void* page = summerAlloc(memoryContext, page_siz);
+	void* page = summerAlloc(memoryContext, page_size);
 	pager.getDataPage(page);
 	page_no pageno = pager.writePage(-1, page);
 	summerFree(memoryContext, page);
@@ -102,36 +103,81 @@ page_no summerBtreeWriteFreeDataPage(){
 }
 
 /*
- * insert tuple into table
+ * write a new special page into db file
  */
-page_no summerBtreeInsert(char* table_name, tuple* tuple_ptr){
+page_no summerBtreeWriteFreeSpecPage(){
+	int page_size = config_info.page_size;
+	void* page = summerAlloc(memoryContext, page_size);
+	pager.getNewSpecPage(page);
+	page_no pageno = pager.writePage(-1, page);
+	summerFree(memoryContext, page);
+	return pageno;
+}
+
+/*
+ * insert tuple into data table
+ */
+static
+page_no btreeInsertDataTuple(char* table_name, tuple* tuple_ptr){
 	//init Cursor to rootpage
 	BtCursor* cursor = global_btree->btCursor;	
 	cursor->cell_index = 0;
+	MemPage* master_page = (MemPage*)pager.getMemPage(pager.getPage(1));
+	cursor->cell_index++;
+	(cursor->trace)[cursor->cell_index] = master_page;
+	//in master table we find the first page of data table
+
+}
+
+/*
+ * insert tuple into special table
+ */
+page_no summerBtreeInsert(char* table_name, tuple* tuple_ptr){
 	//find the second page
 	MemPage* special_page = NULL;
 	if(strcmp("_master", table_name) == 0){
-		special_page = pager.getMemPage(pager.getPage(1));
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(1));
 	}
 	else if(strcmp("_scheme", table_name) == 0){
-		special_page = pager.getMemPage(pager.getPage(2));
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(2));
 	}
 	else if(strcmp("_lock", table_name) == 0){
-		special_page = pager.getMemPage(pager.getPage(3));
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(3));
 	}
 	else if(strcmp("_sequence", table_name) == 0){
-		special_page = pager.getMemPage(pager.getPage(4));
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(4));
 	}
 	else{
-		MemPage* master_page = pager.getMemPage(pager.getPage(1));
-		cursor->cell_index++;
-		(cursor->trace)[cell_index] = master_page;
-		//in master table we find the first page of data table
+		btreeInsertDataTuple(table_name, tuple_ptr);
 	}
 	//we insert into special table
 	if(special_page != NULL){
-		cursor->cell_index = 1;
-		(cursor->trace)[cell_index] = special_page;
+		MemPage* insert_mem_page = special_page;
+		page_no next_page = insert_mem_page->header->pageno;
+		//find the page we can insert
+		while(insert_mem_page->header->fs_size < 2 + tuple_ptr->size){
+			if(next_page == -1){
+				break;
+			}else{
+				insert_mem_page = pager.getMemPage(pager.getPage(next_page));
+				next_page = insert_mem_page->header->pageno;
+			}
+		}
+
+		if(insert_mem_page->header->fs_size >= 2 + tuple_ptr->size){       //we find the insert page
+			pager.insertTuple(insert_mem_page->page_space, tuple_ptr);
+			return insert_mem_page->pageno;
+		}
+		else{
+			page_no new_pageno =  summerBtreeWriteFreeSpecPage();
+			return -1;
+		}
+	}
+	else{
+		return -1;
 	}
 }
+
+
+
 

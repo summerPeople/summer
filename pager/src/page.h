@@ -33,10 +33,8 @@ typedef struct{
 	int16_t reserved;			//reserved
 	int16_t fragment;			//the size of the frament space in the page
 	int16_t fs_size;			//the size of free space
-	union{
-		void *next;			//type = SPECIAL,it indicates the next page of the special table
-		int32_t page_no;		//type != SECIAL, it indicates the rightmost son of the inner node 
-	}u;
+	page_no pageno;          //type = SPECIAL,it indicates the next page of the special table
+							 //type != SECIAL, it indicates the rightmost son of the inner node 
 }Data_page_head;
 
 typedef struct{
