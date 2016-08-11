@@ -128,14 +128,14 @@ void * allocMemPoolPage(page_no n){
 	//while the nth diskPage is not in memorypool and there exists one free page at least.
 	freeNode * curFreeNode = freeHead->next;
 	if(curFreeNode!=NULL){
-			useNode * newUseNode = (useNode *)malloc(sizeof(useNode));
+		 	useNode * newUseNode = (useNode *)malloc(sizeof(useNode));
 			newUseNode->memPage = curFreeNode->freeMemPage;
 			freeHead->next = curFreeNode->next;
 			newUseNode->diskPage = n;
 			newUseNode->next = NULL;
 			if(useHead->end!=NULL)
 			{	
-				newUseNode->last = useHead->end;
+		 		newUseNode->last = useHead->end;
 				useHead->end->next = newUseNode;
 				//when the used linklist isn't NULL,build a BST tree
 				insertBST(&T,newUseNode);
@@ -144,7 +144,7 @@ void * allocMemPoolPage(page_no n){
 				newUseNode->last = NULL;
 			 	useHead->next = newUseNode;
 				useHead->end = newUseNode;
-	 			insertBST(&T,newUseNode);
+	 	 		insertBST(&T,newUseNode);
 			}
    			useHead->end = newUseNode;
 				
@@ -156,15 +156,18 @@ void * allocMemPoolPage(page_no n){
 	 	 	}
 	//no free page left ,use LRU to substitute	
 	else {
-		useHead->next->diskPage = n;
+		u seHead->next->diskPage = n;
 		int mem_num=useHead->next->memPage;
-		if(change_flag[mem_num]!=0)
+
+		if(change_flag[mem_num]!=0){
 			pager.writePage(useHead->next->diskPage,p+PAGESIZE*mem_num);
+			change_flag[mem_num]=1;
+			}
 		// *(int *)(p+PAGESIZE*useHead->next->memPage)=n;
 		//LOG(DEBUG,"[内存池]|分配函数，替换内存池最久未用的页");
 		summerPagerRead(n,p+PAGESIZE*useHead->next->memPage);
 	 	return p+PAGESIZE*useHead->next->memPage;
-	}  
+	}   
 //	return; 
 }
 
@@ -192,18 +195,22 @@ free the memory of the MemoryPool and the linklist of the used memPage
 */
 void freeMemPool(){
 	//LOG（DEBUG，”[内存池]|释放函数，释放整个内存池空间以及已用链表
-	if(p!=NULL)
-		free(p);
 	useNode * curNode = useHead->next;
 	useNode * temp;
 	while(curNode!=NULL)
 		{ 
-		  temp = curNode->next;
-                  free(curNode);
-		  curNode = temp;
+		if(change_flag[curNode->memPage]!=0){
+			pager.writePage(curNode->diskPage,p+PAGESIZE*curNode->memPage);
+			change_flag[curNode->memPage]=0;
+		}	
+		temp = curNode->next;
+                free(curNode);
+		curNode = temp;
 	 	} 
 	if(useHead!=NULL)
 	 	free (useHead); 
+	if(p!=NULL)
+		free(p);
 }
 
 void setMemPoolFlag(void *mpp){

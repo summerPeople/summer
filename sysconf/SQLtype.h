@@ -14,4 +14,18 @@
 #define DEL 8
 #define UPD 9
 
+#define ATTRINT
+#define ATTRCHAR
+#define ATTRVARCHAR
+
+#define NULL_BIT 1
+#define KEY_BIT 2
+
+typedef struct {
+	char str[64];
+	char type;
+	int16_t length;
+	char attr;
+}Attribute_type;
+
 #endif
