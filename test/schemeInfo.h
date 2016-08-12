@@ -1,2 +1,0 @@
-void *page();
-void *pageMalloc();
