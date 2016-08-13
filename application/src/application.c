@@ -14,7 +14,7 @@ int appInit(){
 
 	//init logger
 	logInitMethods();
-	logger.init("global", "../../log/log.log");
+	logger.init("global", "../log/log.log");
 
 	//init MemoryContext
 	summerCreateMemoryContext("main", 8*1024, 0);

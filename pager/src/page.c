@@ -8,6 +8,7 @@ statement:
 #include"page.h"
 #include"../../sysconf/type.h"
 #include"configLoaderInt.h"
+#include"../../btree/src/btree.h"
 
 /*  
    insert a tuple into a page in memmory
@@ -125,6 +126,15 @@ void initDataPageHead(void *page_ptr, char type)
 	*(int32_t *)(page_ptr + 11) = 0;
 } 
 
+/* 
+***init special table head 
+*/
+void initSpecTablePageHead(void *page_ptr)
+{
+	initDataPageHead(page_ptr, SPECIAL);
+
+}
+
 /*
 ***Get the data page head info 
 */
@@ -136,8 +146,27 @@ void getDataPageHead(void *page_ptr, Data_page_head *head)
 	head->fragment = *(int16_t *)(page_ptr + 7);
 	head->fs_size = *(int16_t *)(page_ptr + 9);
 	head->pageno = *(int *)(page_ptr + 11);
-}
+} 
 
 /*
-	 
+***get a MemPage structure
 */
+void *GetMemPage(void *page_ptr)
+{
+	MemPage *ptr = (MemPage *)malloc(sizeof(MemPage));
+	Data_page_head* head = (Data_page_head *)malloc(sizeof(Data_page_head));
+	ptr->page_space = page_ptr;
+	ptr->is_modify = 0;
+	ptr->header = head;
+	getDataPageHead(page_ptr, head);
+	ptr->cell_num = head->tuple_count;
+	ptr->offsets = (int16_t *)malloc(ptr->cell_num * sizeof(int16_t));
+	int32_t i = 0, k = 0;
+	int32_t offset;
+	//get the offset of undeleted tuples;
+	for(i = 0; i < head->start; i = i + 2){
+		offset = *(int16_t *)(page_ptr + DPHSIZE + i);
+		if(*(page_no *)(page_ptr + offset) != -1)
+			ptr->offsets[k] = offset;
+	}
+}

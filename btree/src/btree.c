@@ -180,4 +180,6 @@ page_no summerBtreeInsert(char* table_name, tuple* tuple_ptr){
 
 
 
-
+void test(char* str){
+	printf("this is in btree: %s\n", str);
+}

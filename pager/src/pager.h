@@ -14,8 +14,8 @@ typedef struct Pager{
 	void* (*getMemPage)(void* page);                        //get a mempage and return it , you should cast it to a mem page 
 	page_no (*writePage)(page_no, void* page);              //write page into db file, if page is new, page_no == -1
 
-	FILE* (*openDbFile)(char* file_name);                   //open db file
-	FILE* (*createDbFile)(char* file_name);                 //create a new db file
+	void (*openDbFile)(char* file_name);                   //open db file
+	void (*createDbFile)(char* file_name);                 //create a new db file
 
 	void (*getDbFileHead)(void* root_page, File_head* ptr); //get file header of the db file
 	void (*getPageHead)(void* page_ptr, Data_page_head* ptr);//get page header of db file page

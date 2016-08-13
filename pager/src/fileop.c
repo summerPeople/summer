@@ -1,4 +1,5 @@
 #include "fileop.h"
+#include <stdio.h>
 
 extern FILE* fp;
 
@@ -7,7 +8,7 @@ extern void summerSetFP(FILE* file_ptr);
 /*
  * open a specifical database file
  */
-void summerPagerOpendbFie(char* file_name){ 
+void summerPagerOpenDbFile(char* file_name){ 
 	FILE* file_ptr = fopen(file_name, "rb+");	
 	summerSetFP(file_ptr);
 }
