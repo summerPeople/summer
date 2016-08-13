@@ -2,7 +2,6 @@
 
 #include <malloc.h>
 #include <assert.h>
-#include <math.h>
 
 MemoryContext* memoryContext;
 
@@ -47,7 +46,7 @@ void summerCreateMemoryContext(char* name, Size size, int8_t flags){
 
 	//init freelist header
 	for(int i=0; i < FREELISTS_NUM; i++){
-		(context->free_list)[i].chunk_size = 2 << (i+3);
+		(context->free_list)[i].chunk_size = 2 << (i + 3);
 		(context->free_list)[i].used_list = NULL;
 		(context->free_list)[i].free_list = NULL;
 	}

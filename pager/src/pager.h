@@ -7,8 +7,6 @@
 #include "../../sysconf/type.h"
 #include "pageInt.h"
 
-#include <stdio.h>
-
 typedef struct Pager{
 	void* (*getPage)(page_no pageno);                       //get a page and return it , not memPage
 	void* (*getMemPage)(void* page);                        //get a mempage and return it , you should cast it to a mem page 
@@ -27,6 +25,9 @@ typedef struct Pager{
 	void (*insertTuple)(void* page_ptr, tuple* tuple_ptr);  //insert tuple into page
 	void (*deleteTuple)(void* page_ptr, int16_t offset);    //delete tuple in the page_ptr
 	void (*getTuple)(void* page_ptr, int16_t offset, tuple* temp);  //get a tuple in the page and store it in temp
+
+	void (*setPageModified)(void* page_ptr);                //set page to be modified
+	int (*checkMemPage)(void* memPage_ptr);                 //if memPage is valid, return 0
 }Pager;
 
 #endif

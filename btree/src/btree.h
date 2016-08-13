@@ -41,6 +41,7 @@ typedef struct MemPage{
  */
 typedef struct BtCursor{
 	int16_t cell_index;                      //index in MemPage.offsets
+	int16_t trace_index;                     //index in trace
 	MemPage* trace[BTREE_MAX_DEEP];           //those pages the cursor has moved
 }BtCursor;
 
