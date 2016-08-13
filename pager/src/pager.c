@@ -21,5 +21,4 @@ void summerPagerCreatePager(){
 
 	pager.getNewPage0 = initFileHead;
 	pager.getNewSpecPage = initSpecTablePageHead;
-	pager.getDataPage = NULL;
 }

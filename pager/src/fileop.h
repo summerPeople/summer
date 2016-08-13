@@ -6,6 +6,4 @@
 #include "configLoaderInt.h"
 #include <stdio.h>
 
-extern FILE* fp;
-
 #endif

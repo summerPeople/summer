@@ -9,7 +9,7 @@
 /*
  * function to init the application
  */
-int appInt();
+int appInit();
 
 /*
  * function to exit the application

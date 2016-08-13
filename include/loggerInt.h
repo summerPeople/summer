@@ -16,12 +16,12 @@ extern Logger logger;
 /*
  * switcher of debug mode
  */
-#define DEBUG
+#define CAN_DEBUG
 
 /*
  * according to DEBUG to log or not
  */
-#ifdef DEBUG
+#ifdef CAN_DEBUG
 #define LOG(x, y) (logger.log(x, y))
 #else
 #define LOG(x, y) 
