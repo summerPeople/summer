@@ -21,10 +21,10 @@ int main()
 	assert(sql);
 	LOG(INFO, "compile complete!");
 	//void *parameter;
-	char *parameter;
+	void *parameter;
 	unsigned char *type;
 	summerSqlAnalyse(sql, &type, &parameter);
-	LOG(INFO, "SQL Analyses complete!")
+	LOG(INFO, "SQL Analyses complete!");
 	summerSqlExecute(*type, parameter);
 	appExit();
 	printf("over!\n");

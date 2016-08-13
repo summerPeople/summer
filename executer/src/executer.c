@@ -6,11 +6,12 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-#include"btreeInt.h"
 #include"../../sysconf/SQLtype.h"
 #include<stdint.h>
 #include<stdbool.h>
 #include<executerInt.h>
+#include"exevuter.h"
+#include"btreeInt.h"
 #include"loggerInt.h"
 
 //extern void summerBtreeCreateDbFile(char* file_name);
@@ -30,16 +31,23 @@ void summerSqlAnalyse(void *sql, unsigned char **_out_type, void **_out_paramete
 				//sql format
 				//****type           char                        1byte
 				//****dbname         char *                      4bytes
-				parameter = malloc(sizeof(char *));
-				//get the name
-				char *dbname = (char *)*(int *)(sql + 1);
-				int32_t length =  strlen(dbname) + 2;
-				char *new_dbname = (char *)malloc(length * sizeof(char));
-				strcpy(new_dbname, dbname);
-				*(int *)parameter = (int)new_dbname;
-				*_out_parameter = parameter;
+				{
+					//para
+					parameter = malloc(sizeof(char *));
+					//get the name
+					char *dbname = (char *)*(int *)(sql + 1);
+					//malloc a new place to store the dbname,for the sql structure
+					//will be deleted after sql Analyse
+					int32_t length =  strlen(dbname) + 2;
+					char *new_dbname = (char *)malloc(length * sizeof(char));
+					//copy the dbname
+					strcpy(new_dbname, dbname);
+					//bring the dbname out
+					*(int *)parameter = (int)new_dbname;
+					*_out_parameter = parameter;
+				}
 				break;
-		case CTB:		//create table
+		case CTB:						//create table
 				//sql format
 				//****type           char                        1byte
 				//****tname          char *                      4bytes
@@ -48,24 +56,40 @@ void summerSqlAnalyse(void *sql, unsigned char **_out_type, void **_out_paramete
 				//****attr2          Attribute_type *            4bytes
 				//....attr_num attrs
 				{ 
-				/*
+				
 					int16_t attr_num = *(int16_t *)(sql + 5);
+					//the format of a tuple  in _scheme table
+					//head info:
+					//****pageno		page_no					 4bytes
+					//****rowid         int64_t                  8bytes
+					//****attr_num      int16_t					 2bytes
+					//****length[attr_num]    int16_t			 2*attr_num bytes
+					//data:
+					//****tname			char[64]                 64bytes
+					//attr1:
+					//****attr1_name    char[64]                 64bytes
+					//****type          char                     1bytes
+					//****attr_length   int16_t                  2bytes
+					//****attr_attr     char                     1bytes
 					int16_t size = 2 + 4 + 8 + 2 + attr_num * 2 + 64 + 68 * attr_num;
 					// joint a tuple
 					parameter =(void *)malloc(size * sizeof(char));
-					*parameters = parameter;
+					*_out_parameter = parameter;
 					memset(parameter, 0, size * sizeof(char));
 					//keep the tuple size
 					*(int16_t *)(parameter) = size -2;
 					//tuple headinfo
+					//set page_no
 					*(page_no *)parameter = 0;
-					//*(int64_t *)(parameter + 4) = rowid;
+					//for now we don't know the rowid, we will set it later befor we insert the 
+					//tuple into _scheme table
+					//set the attr_num
 					*(int16_t *)(parameter + 14) = attr_num;
-					//the length of property
+					//set the length of property
 					int16_t *length = (int16_t *)(parameter + 16);
 					int i = 0;
 					for(i = 0; i < attr_num; i++){
-						*(length + i) = 64;
+						*(length + i) = 68;
 					}
 					//schemeInfo data
 					void *schemeInfo = parameter + 2 + 4 + 8 +2 +attr_num * 2;
@@ -85,9 +109,8 @@ void summerSqlAnalyse(void *sql, unsigned char **_out_type, void **_out_paramete
 						memcpy(schemeInfo + 67, &attr->attr, 1);
 						schemeInfo += 68;
 					}
-				*/
 				} 
-				break;
+				
 		case DDB:						//	drop database
 				break;
 		case DTB:    					//	drop table
@@ -155,9 +178,12 @@ bool createDatabase(char *dbname)
  */
 bool createTable(char *tname, tuple *new_tuple)
 {
-/*	//create table
-	//insert a new tuple into scheme table
-	summerBtreeInsertTuple("_scheme", new_tuple);
+	//create a table needs four steps
+	//firstly, insert a record into _master table
+	//secondly, insert a record into _scheme table
+	//thirdly, insert a record into _sequence table
+	//at last, insert a record into _lock table
+	
 	//insert a new tuple into master table
 	int32_t tID = summerBtreeGetTableID();
     int32_t root = summerBtreeGetTableRoot();
@@ -179,11 +205,16 @@ bool createTable(char *tname, tuple *new_tuple)
 	temp->str = str;
 	temp->size = size;
 	summerBtreeInsertTuple("_master", temp);
+
+	//insert a new tuple into scheme table
+	summerBtreeInsertTuple("_scheme", new_tuple);
+
 	//insert into a new tuple into sequence table
 	summerBtreeInsertTuple("_sequence", );
+
 	//insert into a new tuple into lock table
 	summerBtreeInsertTuple("_lock", );
-*/
+
 }  
 
 /*
