@@ -1,5 +1,6 @@
 #include "fileop.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 extern FILE* fp;
 
@@ -41,11 +42,11 @@ int summerPagerDeleteDbFile(char* file_name){
  * pageno from 0 to ......
  */
 int summerPagerRead(page_no pageno, void* page){
+	rewind(fp);
 	int page_size = config_info.page_size; 
 	long page_seek_location = pageno * page_size;
 	fseek(fp, page_seek_location, SEEK_SET);
 	size_t read_num = fread(page, page_size, 1, fp);
-	fseek(fp, 0L, SEEK_SET);                         //move fp to head
 	if(read_num == 1){
 		return 0;
 	}
@@ -57,6 +58,7 @@ int summerPagerRead(page_no pageno, void* page){
  */
 
 page_no pagerWrite(page_no pageno, void* page){
+	rewind(fp);
 	int page_size = config_info.page_size; 
 	page_no write_page = -1;
 	if(pageno == -1){
@@ -70,7 +72,6 @@ page_no pagerWrite(page_no pageno, void* page){
 		write_page = pageno;
 	}
 	size_t write_num = fwrite(page, page_size, 1, fp);
-	fseek(fp, 0L, SEEK_SET);
 	if(write_num == 1){
 		return write_page;	
 	}

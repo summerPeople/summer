@@ -3,6 +3,7 @@
 cd ../build
 cmake ..
 make 
+../bin/main
 
 #while read line
 #do

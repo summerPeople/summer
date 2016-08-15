@@ -84,4 +84,20 @@ typedef struct At_node{
 	struct At_node * next;  //执行器不需要，编译器使用
 }Att_node;
 
+/*
+	used for executer 
+*/
+typedef struct _node{
+	int16_t index;
+	char cond;
+	char flag;
+	int32_t vint;
+	char *vchar;
+	struct _node *next;
+}Where_conNode;
+
+typedef struct{
+	int16_t n;
+	Where_conNode *or_array[10];
+}Where_conList;
 #endif

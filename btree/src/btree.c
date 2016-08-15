@@ -4,6 +4,7 @@
 #include<stdlib.h>
 #include<assert.h>
 #include<string.h>
+#include<stdio.h>
 
 page_no summerBtreeWriteFreeSpecPage();
 
@@ -34,7 +35,7 @@ void btreeInitCursorSpec(){
 	while(i > 1){
 		btreeFreeMemPage((cursor->trace)[i]);
 	}
-	cursor->trace_index = 0;
+	cursor->trace_index = 1;
 }
 
 /*
@@ -44,10 +45,11 @@ static
 void btreeInitCursorRoot(){
 	BtCursor* cursor = global_btree->btCursor;
 	int i = cursor->trace_index;
+	printf("free mem page: %d\n" , i);
 	while(i > 0){
 		btreeFreeMemPage((cursor->trace)[i]);
 	}
-	cursor->trace_index = 1;
+	cursor->trace_index = 0;
 }
 
 /*
@@ -302,12 +304,13 @@ int btreeSequencialSelect(char* table_name, void* where_clause){
  * insert tuple into spec table
  */
  static 
- page_no btreeInsertSpecTuple(char* table_name, tuple* tuple_ptr){
+page_no btreeInsertSpecTuple(char* table_name, tuple* tuple_ptr){
 	//init Cursor to rootpage
 	BtCursor* cursor = global_btree->btCursor;	
 	btreeInitCursorRoot();
 	//find the second page
 	MemPage* special_page = NULL;
+	printf("insert table %s\n", table_name);
 	if(strcmp("_master", table_name) == 0){
 		special_page = (MemPage*)pager.getMemPage(pager.getPage(1));
 		special_page->pageno = 1;
@@ -324,6 +327,7 @@ int btreeSequencialSelect(char* table_name, void* where_clause){
 		special_page = (MemPage*)pager.getMemPage(pager.getPage(4));
 		special_page->pageno = 4;
 	}
+	printf("get spec table \n");
 	if(special_page != NULL){
 		MemPage* insert_mem_page = special_page;
 		page_no next_page = insert_mem_page->header->pageno;
@@ -466,11 +470,25 @@ void summerBtreeCreateDbFile(char* file_name){
  * delete db file
  */
 int summerBtreeDeleteDbFile(char* file_name){
-	return pager.deleteDbFile(file_name);
+	//get a file name with postfix
+	char* db_file_name = (char*)calloc(1, 5*sizeof(char) + strlen(file_name));
+	char* postfix_str = ".hot";
+	strcpy(db_file_name, file_name);
+	strcat(db_file_name, postfix_str);
+	page_no pageno = pager.deleteDbFile(db_file_name);
+	free(db_file_name);
+	return pageno;
 }
 
 int summerBtreeOpenDbFile(char* file_name){
-	return pager.openDbFile(file_name);
+	//get a file name with postfix
+	char* db_file_name = (char*)calloc(1, 5*sizeof(char) + strlen(file_name));
+	char* postfix_str = ".hot";
+	strcpy(db_file_name, file_name);
+	strcat(db_file_name, postfix_str);
+	page_no pageno = pager.openDbFile(db_file_name);
+	free(db_file_name);
+	return pageno;
 }
 
 /*

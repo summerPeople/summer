@@ -67,7 +67,7 @@ void * allocMemPool(){
 	freeHead->end = NULL;
 	int16_t i=0;
 	for(i=0;i<POOLSIZE;i++){
-		ch ange_flag[i]=0;
+		change_flag[i]=0;
 		} 
 	for(i=0;i<POOLSIZE;i++){
 		freeNode * newFreeNode = (freeNode *)malloc (sizeof(freeNode));
@@ -120,7 +120,7 @@ void * allocMemPoolPage(page_no n){
 			}
 			//record n in the MemoryPool
 			//*(int *)(p+PAGESIZE*curUse->memPage)=n;
-			}
+		}
 		//LOG(DEBUG,"[内存池]|分配函数，内存中已存在此页“);
 		return p+PAGESIZE*curUse->memPage;
 		
@@ -150,9 +150,11 @@ void * allocMemPoolPage(page_no n){
    			useHead->end = newUseNode;
 				
 			//*(int *)(p+PAGESIZE*curFreeNode->freeMemPage)=n;
-			free(curFreeNode);
+		//	free(curFreeNode);
 			//LOG(DEBUG,"[内存池]|分配函数，新分配一个内存池中的页”);
-			summerPagerRead(n,p+PAGESIZE*curFreeNode->freeMemPage);
+			printf("pageno:%d\n", n);
+			int res = summerPagerRead(n,p+PAGESIZE*curFreeNode->freeMemPage);
+			printf("read result:%d\n", res);
 			return p+PAGESIZE*curFreeNode->freeMemPage;
 	 	 	}
 	//no free page left ,use LRU to substitute	
@@ -224,7 +226,7 @@ return mp's diskpageno
 */
 page_no getMemPoolPageno(void *mp){
 	int n = (mp - p)/PAGESIZE;
-	useNode * cur_node = uHead->next;
+	useNode * cur_node = useHead->next;
 	while(cur_node != NULL){
 		if(cur_node->memPage == n){
 			page_no diskPageno = cur_node->diskPage;

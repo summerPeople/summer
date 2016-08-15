@@ -17,17 +17,18 @@ int main()
 	appInit();
 	LOG(INFO, "summer test start!");
 	void *sql = NULL;
-	sql = summerCompile();
-	assert(sql);
-	LOG(INFO, "compile complete!");
-	//void *parameter;
-	void *parameter;
-	unsigned char *type;
-	summerSqlAnalyse(sql, &type, &parameter);
-	LOG(INFO, "SQL Analyses complete!");
-	summerSqlExecute(*type, parameter);
+	while(1){
+		sql = (void *)summerCompile();
+		assert(sql);
+		LOG(INFO, "compile complete!");
+		//void *parameter;
+		void *parameter;
+		void *execute_info;
+		summerSqlAnalyse(sql, &execute_info, &parameter);
+		LOG(INFO, "SQL Analyses complete!");
+		summerSqlExecute(execute_info, parameter);
+		printf("over!\n");
+	}
 	appExit();
-	printf("over!\n");
-
 	return 0;
 }

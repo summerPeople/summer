@@ -12,7 +12,7 @@
 #define VALUEP 8  //指向value子句的指针
 
 enum token_type{
- 	SEM = 1,	//;
+ 	SEM = 0,	//;
 	CREATE = 2,
 	TABLE = 3,
 	DATABASE =4,

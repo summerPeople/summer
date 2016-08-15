@@ -55,7 +55,7 @@ void * whereCompile(){
 				if(tok4 == OR) n++;
 				if(tok4 == SEM) {
 					//printf("退出where子句\n");
-					return p;
+					return (void *)p;
 					break;
 				}
             } 
@@ -144,7 +144,7 @@ void * createStm(){
 	 	 		} 
 	 	 	}
 	 	} 
-	return sql;
+	return (void *)sql;
 	}
 	if(tok1 == DATABASE){
         if(yylex()==NAME){ 
@@ -152,7 +152,7 @@ void * createStm(){
             *(sql) = CDB;
             *(intptr_t *)(sql+STMTYPE) = (intptr_t)yyname;
 			//printf("创建的数据库为 %d  %s\n",*(sql),(char *)(*(int32_t *)(sql+1)));
-		 	  return sql;
+		 	  return (void *)sql;
         }    
 	} 
 }
@@ -168,7 +168,7 @@ void * dropStm(){
             *(sql)=DTB;
             *(intptr_t *)(sql+STMTYPE) = (intptr_t)yyname;
 			//printf("删除表 %d %s\n",*(sql),(char *)(*(int32_t *)(sql + 1)));
-	   		return sql;
+	   		return (void *)sql;
 	  	 }
 	} 
     if(tok1 == DATABASE){
@@ -177,7 +177,7 @@ void * dropStm(){
 			*(sql)=DDB;
 			*(intptr_t *)(sql+STMTYPE) = (intptr_t)yyname;
 			//printf("删除数据库%d %s\n",*(sql),(char *)(*(int32_t *)(sql + 1)));
-            return sql;
+            return (void *)sql;
         } 
 	}   
 }
@@ -202,7 +202,7 @@ void * selectStm(){
                 if(yylex() == WHERE){
                      *(intptr_t *)(sql + STMTYPE + DTNAME + ATTRNUM) = (intptr_t)whereCompile(); //以整数存指针，将来解析用指针解读这个32位整数
 				//printf("where 子句执行完毕\n");
-                    return sql;
+                    return (void *)sql;
 			 	}
 			} 
          } 
@@ -366,7 +366,7 @@ void * insertStm(){
 							}
 							free(att_head);
 							free(va_head);
-							return sql;
+							return (void *)sql;
 				 			break; 
 	 	 		 		}
 	 			 	}
@@ -389,7 +389,7 @@ void * deleteStm(){
 			//printf("删除语句 %d %s \n",*(sql),(char *)(*(int *)(sql+1)));
 			if(yylex() == WHERE){
 				*(intptr_t *)(sql + STMTYPE + DTNAME) = (intptr_t)whereCompile();
-	 	   		return sql;
+	 	   		return (void *)sql;
 		   	}
 		  } 
 	  }  
@@ -420,31 +420,31 @@ void *  updateStm(){
 				if(att_head->next == NULL){
 		 			att_head->next = att_node;
 	 				att_head->end = att_node; 
-				}
-				else {
+ 				}
+ 				else {
 	 	 			att_head->end->next = att_node;
 					att_head->end = att_node;
 				}
 				//printf("识别等号、\n");
-				if(yylex() == EQ){
+ 				if(yylex() == EQ){
 	 	 			Va_node * va_node = (Va_node *)malloc(sizeof(Va_node));
 					va_node->next = NULL;
 					int32_t tok2 = yylex();
 					//printf("tok2 = %d \n",tok2);
 					if(tok2 == QM) tok2 = yylex();
 					//printf("tok2 new = %d\n",tok2);
-					if(tok2 == NUMBER){
+ 					if(tok2 == NUMBER){
 	 	 				va_node->flag = ATTRINT;					
 						va_node->vint = yynum; 
 				//		printf("等号右边数字 %d \n"，yynum);
 	 					//printf(" = youbian =  %d \n",yynum);
 					}
-					if(tok2 == NAME){
+ 					if(tok2 == NAME){
 	 	 			 	va_node->flag = ATTRCHAR ;
 						va_node->vchar = yyname;
 						//printf("等号右边字符 %s \n",yyname);
 					}
-					if(va_head->next == NULL){
+ 					if(va_head->next == NULL){
 	 	 			 	va_head->next = va_node;
 						va_head->end = va_node;
 						//printf("va_head->next->v int = %d \n",va_node->vint);
@@ -452,7 +452,7 @@ void *  updateStm(){
 					else{
 						va_head->end->next = va_node;
 	 					va_head->end = va_node; 
-		 			 }
+ 		 			 }
 				}
 				tok1 = yylex();
 				while(tok1 == QM || tok1 == COMMA) tok1 = yylex();
@@ -479,27 +479,27 @@ void *  updateStm(){
 		  			*(intptr_t *)(sql + STMTYPE + DTNAME + ATTRNUM + 2*n*ATTRLEN) = (intptr_t)whereCompile();
 					free(att_head);
 					free(va_head);
-					return sql;
+					return (void *)sql;
 	 	 			break; 
-				} 
+ 				} 
 	  	  		break; 
-	 	 	} 
- 	 	} 
-	} 
-}
+ 	 	 	} 
+  	 	} 
+ 	} 
+} 
 
 /*
 	识别简单open 数据库语句
  */
 void * openStm(){
 	char * sql; 
-	if(yylex() == NAME){
+ 	if(yylex() == NAME){
 	 	sql = (char *)malloc(sizeof(char)*(STMTYPE + DTNAME));
 		*(sql) = OPEND;
 		*(intptr_t *)(sql + STMTYPE) = (intptr_t)yyname;
-	 	return sql;
+	 	return (void *)sql;
 	}  
-}
+} 
 
 /*
 	返回一个void *sql指针，指向识别之后的内存片

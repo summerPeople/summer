@@ -6,9 +6,9 @@
 %}
 
 %%
-"create"|"CREATE"	 {return CREATE;}		
+"create"|"CREATE"	 {printf("%s",yytext);return CREATE;}		
 "table"|"TABLE"		 {return TABLE;}
-"database"|"DATABASE"   {return DATABASE;}
+"database"|"DATABASE"   {printf("%s",yytext);return DATABASE;}
 "drop"|"DROP"		 {return DROP;}
 "select"|"SELECT"	 {return SELECT;}
 "from"|"FROM"		 {return FROM;}
@@ -30,9 +30,9 @@
 "and"|"AND"			{return AND;}
 "or"|"OR"			{return OR;}
 ","					{return COMMA;}
-[a-zA-Z]+	 {yyname = (char *)malloc(sizeof(char)*(yyleng+1));yylen = yyleng+1; strcpy(yyname,yytext); return NAME;}
+_?[a-zA-Z][0-9a-zA-Z]+	 {printf("%s",yytext);yyname = (char *)malloc(sizeof(char)*(yyleng+1));yylen = yyleng+1; strcpy(yyname,yytext); return NAME;}
 [0-9]+		 {yynum=atoi(yytext); return NUMBER;}
-";"		 {return SEM;}
+";"		 {printf("%s",yytext);return SEM;}
 [ \t]		 {/*忽略空白字符*/}
 "*"			 {return STAR;}
 "="			 {return EQ;}
