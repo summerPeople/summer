@@ -920,12 +920,12 @@ YY_RULE_SETUP
 case 11:
 YY_RULE_SETUP
 #line 19 "token.l"
-{printf("识别zuo括号\n");return LEFTBRAC;}
+{return LEFTBRAC;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 20 "token.l"
-{printf("识别you括号\n");return RIGHTBRAC;}
+{return RIGHTBRAC;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
@@ -985,7 +985,7 @@ YY_RULE_SETUP
 case 24:
 YY_RULE_SETUP
 #line 32 "token.l"
-{printf("匹配逗号");return COMMA;}
+{return COMMA;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP

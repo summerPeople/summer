@@ -9,7 +9,6 @@
 	解析WHERE子句，  
  */
 void * whereCompile(){
-	void * wp;
     int16_t n=0; //
     int16_t tok1 = yylex();
     Where_type * p =(Where_type *)malloc(sizeof(Where_type));
@@ -38,8 +37,7 @@ void * whereCompile(){
             else if(tok3 == QM && yylex() == NAME) {
                 new_wh_node->flag = ATTRCHAR;
                 new_wh_node->vint = 0;
-				new_wh_node->vchar = (char *)malloc(sizeof(char)*(yylen +1));
-                *(int32_t *)new_wh_node->vchar = yyname;
+				new_wh_node->vchar = yyname;
                 new_wh_node->next = NULL;
                 if(yylex() == QM) ;
             }   
@@ -75,8 +73,7 @@ void * createStm(){
 	//识别“table"
 	if(tok1 == TABLE){
 	 	if(yylex() == NAME){
-	 		char * tbname = (char *)malloc(sizeof(char)*(yylen+1));
-			strcpy(tbname,yyname);
+	 		char * tbname = yyname;
 			if(yylex() == LEFTBRAC){
 			 	int16_t n = 0;
 				Ct_head * ct_head = (Ct_head *)malloc(sizeof(Ct_head));
@@ -91,7 +88,7 @@ void * createStm(){
 				//	printf("%s \n",new_node->str);
 					switch (yylex()){
 	 			 		int char_flag = 0;
-                        case INT :{new_node->type = ATTRINT; new_node->length=4;printf("int\n");break;}
+                        case INT :{new_node->type = ATTRINT; new_node->length=4;break;}
                         case CHAR : char_flag = 1;
                         case VARCHAR : { 
                              if(yylex() == LEFTBRAC && yylex() == NUMBER){
@@ -130,19 +127,20 @@ void * createStm(){
 					if(tok3 == RIGHTBRAC){
                         sql  = (char *)malloc(sizeof(char)*(STMTYPE+DTNAME+ATTRNUM+ATTRLEN*n));
                         *(sql) = CTB;
-                        *(int32_t *)(sql+1) = tbname;
-						//printf("构造sql:tbname = %s\n",(char *)(*(int32_t *)(sql+1)));
-                        *(int16_t *)(sql+5) = n;
+                        *(intptr_t *)(sql+STMTYPE) = (intptr_t)tbname;
+					//	printf("构造sql:tbname = %s\n",(char *)(*(intptr_t *)(sql+1)));
+                        *(int16_t *)(sql+STMTYPE + DTNAME) = n;
                         int16_t i = 0;
                         Attribute_type *cur_node = ct_head->next;
                         while(cur_node != NULL){
-                             *(int32_t *) (sql+7+i*ATTRLEN) = cur_node;
+                             *(intptr_t *) (sql+STMTYPE+DTNAME+ATTRNUM+i*ATTRLEN) = (intptr_t)cur_node;
 						//	printf("第%d 个参数 %s 类型%d 长度%d 属性%d \n",i+1,cur_node->str,cur_node->type,cur_node->length,cur_node->attr);
                             cur_node = cur_node->next;
-                            i++;
+							i++; 
                         }
+						free(ct_head);
 						break;
-                      }
+                    }
 	 	 		} 
 	 	 	}
 	 	} 
@@ -150,38 +148,38 @@ void * createStm(){
 	}
 	if(tok1 == DATABASE){
         if(yylex()==NAME){ 
-            sql = (void *)malloc(sizeof (char)*(STMTYPE+DTNAME));
+            sql = (char *)malloc(sizeof (char)*(STMTYPE+DTNAME));
             *(sql) = CDB;
-            *(int32_t *)(sql+1) = yyname;
+            *(intptr_t *)(sql+STMTYPE) = (intptr_t)yyname;
 			//printf("创建的数据库为 %d  %s\n",*(sql),(char *)(*(int32_t *)(sql+1)));
-		 	return sql;
-        }  
+		 	  return sql;
+        }    
 	} 
 }
 /*
 	drop 语句，识别drop table tbname
  */
 void * dropStm(){
-	char * sql;
+	char * sql ;
 	int tok1 = yylex();
     if(tok1 == TABLE){
         if (yylex()==NAME){
             sql = (char *)malloc(sizeof(STMTYPE+DTNAME));
             *(sql)=DTB;
-            *(int32_t *)(sql+1) = (int32_t)yyname;
+            *(intptr_t *)(sql+STMTYPE) = (intptr_t)yyname;
 			//printf("删除表 %d %s\n",*(sql),(char *)(*(int32_t *)(sql + 1)));
-	 		return sql;
-	 	}
-	}
+	   		return sql;
+	  	 }
+	} 
     if(tok1 == DATABASE){
-	 	if(yylex() == NAME){
+	 	if(yylex() == NAME){ 
             sql = (char *)malloc(sizeof(STMTYPE + DTNAME));
 			*(sql)=DDB;
-			*(int32_t *)(sql+1) = (int32_t)yyname;
+			*(intptr_t *)(sql+STMTYPE) = (intptr_t)yyname;
 			//printf("删除数据库%d %s\n",*(sql),(char *)(*(int32_t *)(sql + 1)));
-             return sql;
-        }
-	} 
+            return sql;
+        } 
+	}   
 }
 
 /*
@@ -194,16 +192,15 @@ void * selectStm(){
     if(tok1 == STAR){
         if(yylex() == FROM) {
             if(yylex() == NAME){
-                char * tbname = (char *)malloc(sizeof(char) * (yylen + 1));
-                strcpy(tbname,yyname);
+				char * tbname = yyname;
                 sql = (char *)malloc(sizeof(char)*(STMTYPE+DTNAME+ATTRNUM+WHEREP));
                 *(sql) = SEL;
-                *(int32_t *)(sql + 1) = tbname;
-                *(int16_t *)(sql + 5) = 0;   //属性个数为0
+                *(intptr_t *)(sql + STMTYPE) =(intptr_t) tbname;
+                *(int16_t *)(sql + STMTYPE + DTNAME) = 0;   //属性个数为0
 				//printf("选择语句 %d ,%s 属性个数%d ,\n"，*(sql),(char *)(*(int *)(sql +1)),*(sql + 5));
 				//printf("select 语句 %d ,表名 %s , 属性个数 %d \n",*(sql),(char *)(*(int32_t *)(sql +1)),*(int16_t *)(sql+5));
                 if(yylex() == WHERE){
-                    *(int32_t *)(sql + 7) = whereCompile(); //以整数存指针，将来解析用指针解读这个32位整数
+                     *(intptr_t *)(sql + STMTYPE + DTNAME + ATTRNUM) = (intptr_t)whereCompile(); //以整数存指针，将来解析用指针解读这个32位整数
 				//printf("where 子句执行完毕\n");
                     return sql;
 			 	}
@@ -211,94 +208,93 @@ void * selectStm(){
          } 
     }
 	if(tok1 == NAME){
-        int16_t tok2;
+        int16_t tok2; 
         Att_head * att_head = (Att_head *)malloc(sizeof(Att_head));
         att_head->next = NULL;
 		att_head->end = NULL;
 		int16_t n = 0;
 		//printf("进入select \n");
 		while(tok1 == NAME){
-	 		n++;
+	 	 	n++;
 			Att_node * att_node = (Att_node *)malloc(sizeof(Att_node));
 			att_node->next = NULL;
 			strcpy(att_node->str,yyname);
 			//printf("识别了%s \n",yyname);
 			if(att_head->next == NULL){
-	 			att_head->next = att_node;
-				att_head->end = att_node;
-			}   
+	 	 		att_head->next = att_node;
+			 	att_head->end = att_node;
+			}    
 			else{
-	 			att_head->end->next = att_node;
+	 	 	 	att_head->end->next = att_node;
 				att_head->end = att_node;
 			}   
 			tok2 = yylex();
 			if(tok2 == COMMA) {
-	 			tok1 = yylex();
-				continue;
+	 		 	tok1 = yylex();
+		 		continue;
 			}
-			else break;
+			 else break ;
 		}   
 		sql = (char *)malloc(sizeof(char)*(STMTYPE+DTNAME+ATTRNUM+ATTRLEN*n+WHEREP));
 		*(sql) = SEL;
 		if(tok2 == FROM){
 		 	if(yylex() == NAME){
-		 		char * tbname = (char *)malloc(sizeof(char)*(yylen + 1));
-				strcpy(tbname,yyname);
+		 		char * tbname = yyname;
 			//	printf("tbname = %s \n",tbname);
-		 		*(int32_t *)(sql + 1) = tbname;
-				*(int16_t *)(sql + 5) = n;
+		  	 	*(intptr_t *)(sql + STMTYPE) = (intptr_t)tbname;
+				*(int16_t *)(sql + STMTYPE + DTNAME) = n;
 				Att_node * cur_node = att_head->next;
 				int16_t i = 0;
 				while(cur_node != NULL){
-					*(sql + 7 + i*ATTRLEN)=cur_node;
+					*(intptr_t *)(sql + STMTYPE + DTNAME + ATTRNUM + i*ATTRLEN) = (intptr_t)cur_node;
 			//		printf("属性 %s \n",cur_node->str);
-		 			cur_node = cur_node->next;
+		  	 		cur_node = cur_node ->next;
 				}
-				*(char *)(sql +7 + n*ATTRLEN) = 0 ; 
+				free(att_head);
+				*(intptr_t *)(sql +STMTYPE + DTNAME + ATTRNUM  + n*ATTRLEN) = 0 ; 
 				if(yylex() == WHERE){
-			 		*(char *)(sql + 7 + n*ATTRLEN ) = whereCompile();
+			 		*(intptr_t *)(sql + STMTYPE + DTNAME + ATTRNUM + n*ATTRLEN ) = (intptr_t)whereCompile();
 				}   
-			}   
-		} 
-	}  
+		 	}     
+		}   
+	}    
 }
 
 void * insertStm(){
 	char  * sql;
 	if(yylex() == INTO){
 		if(yylex() == NAME){
-		  	char * tbname = (char *)malloc(sizeof(char)*(yylen+1));
-			strcpy(tbname,yyname);
+		  	char * tbname = yyname;
 		//	printf("tbname = %s \n",tbname);
-		 	int16_t tok2 = yylex();
+		 	int16_t tok2 = yylex(); 
 			int16_t tok5;
 			int16_t n = 0; //insert中属性的个数
 			Att_head * att_head = (Att_head *)malloc(sizeof(Att_head));
 			att_head->next = NULL;
             att_head->end = NULL; 
 			if(tok2 == LEFTBRAC){
-				int16_t tok3 = yylex();
+	 			int16_t tok3 = yylex ();
 				while(tok3 == NAME){
-					n++;
+	 				n++; 
 					Att_node * att_node = (Att_node *)malloc(sizeof(Att_node));
-					strcpy(att_node->str,yyname);
+					strcpy(att_node->str, yyname);
 					att_node->next = NULL;
 					if(att_head->next == NULL){
-		 				att_head->next = att_node;
+	 	 				att_head->next = att_node;
 						att_head->end = att_node;
 					}
 					else{
-		 				att_head->end->next = att_node;
+	 	 				att_head->end->next = att_node;
 						att_head->end = att_node;
 					}
 					int16_t tok4 = yylex();
 					if(tok4 == COMMA){
-						tok3 = yylex();
-		 				continue;
+	 					tok3 = yylex();
+		 				continue; 
 					}
 					else if(tok4 == RIGHTBRAC) {
-		 				tok5 = yylex();
-						break;
+	 	 				tok5 = yylex();
+						break; 
 		  		 	}
 		  		} 
 			}
@@ -316,7 +312,7 @@ void * insertStm(){
 						Va_node * va_node = (Va_node *)malloc(sizeof(Va_node));
 						va_node->next = NULL;
 						if(tok6 == NUMBER){
-		 					va_node->flag = ATTRINT;
+		 		 			va_node->flag = ATTRINT;
 							va_node->vint = yynum;
 							//printf("yynum = %d \n",yynum);
 						} 
@@ -324,14 +320,14 @@ void * insertStm(){
 		 					va_node->flag = ATTRCHAR;
 							va_node->vchar = yyname;
 							//printf("yyvcahr = %s\n",va_node->vchar);
-							if(yylex() == QM); 		
+				 			if(yylex() == QM); 		
 						}
 						if(va_head->next == NULL){
-							va_head->next = va_node;
+				 			va_head->next = va_node;
 							va_head->end = va_node;
 						}
 						else{ 
-							va_head->end->next =  va_node;
+				 			va_head->end->next =  va_node;
 							va_head->end = va_node;
 						} 
 
@@ -341,73 +337,73 @@ void * insertStm(){
 							tok6 = yylex();
 							if(tok6 == QM) tok6 = yylex();
 							//printf("tok6 = %d \n",tok6);
-							continue; 
+				 			continue; 
 						}
 						else if(tok7 == RIGHTBRAC){
-							//printf("识别之后构建sql");
+	 						//printf("识别之后构建sql");
 							sql = (char *)malloc(sizeof(char)*(STMTYPE+DTNAME+ATTRNUM+ATTRLEN*n+VALUENUM+VALUEP*m));          
 							*(sql) = INS;
-							*(int32_t *)(sql+1) = tbname;
+							*(intptr_t *)(sql+ STMTYPE) = (intptr_t)tbname;
 							//printf("sql 语句 %d tbname %s \n",*(sql),(char *)(*(int *)(sql+1)));
-							*(int16_t *)(sql+5) = n;
+							*(int16_t *)(sql+STMTYPE + DTNAME) = n;
 							//printf("属性个数 %d\n",*(int16_t *)(sql+5));
 							int16_t i=0;
 							
 							Att_node * cur_att_node = att_head->next;
 							while(cur_att_node != NULL){
-								*(int32_t *)(sql+7+i*ATTRLEN) = (int)cur_att_node;
+								*(intptr_t *)(sql+STMTYPE + DTNAME +ATTRNUM+i*ATTRLEN) = (intptr_t)cur_att_node;
 								cur_att_node = cur_att_node->next;
-								//p rintf("属性值 %s \n",(char *)(*( int *)(sql + 7+i*ATTRLEN)));
+	 							//p rintf("属性值 %s \n",(char *)(*( int *)(sql + 7+i*ATTRLEN)));
 							}
 							//保存value 的值
-							*(int16_t *)(sql + 7 + n*ATTRLEN) = m;
+							*(int16_t *)(sql + STMTYPE + DTNAME + ATTRNUM + n*ATTRLEN) = m;
 							//printf("values 个数 %d \n",*(int16_t *)(sql + 7 +n*ATTRLEN));
 							Va_node * cur_va_node = va_head->next;
 							int16_t j = 0;      
 							while(cur_va_node != NULL){     
-								*(int32_t  *)(sql+7+n*ATTRLEN + 2 + j*VALUEP) = cur_va_node;
-								cur_va_node = cur_va_node->next;
+								*(intptr_t  *)(sql+ STMTYPE + DTNAME + ATTRNUM +n*ATTRLEN + VALUENUM + j*VALUEP) = (intptr_t)cur_va_node;
+	 							cur_va_node = cur_va_node->next;
 							}
+							free(att_head);
+							free(va_head);
 							return sql;
-							break; 
-		 				}
-					}
-				}
-			}
-		} 
-	}
+				 			break; 
+	 	 		 		}
+	 			 	}
+	 			} 
+	 		}
+	  	} 
+	}  
 }
 /*
 	识别简单的delete语句
  */
 void * deleteStm(){
-	char * sql;
+	char * sql; 
 	if(yylex() == FROM){
 	 	if(yylex() == NAME) {
-	 		char * tbname = (char *)malloc(sizeof(char)*(yylen+1));
-			strcpy(tbname,yyname);
+	 		char * tbname = yyname;
 			sql = (char*)malloc(sizeof(char)*(STMTYPE+DTNAME+WHEREP));  
 			*(sql) = DEL;
-			*(int32_t *)(sql + 1) = tbname;
+			*(intptr_t *)(sql + STMTYPE) = (intptr_t)tbname;
 			//printf("删除语句 %d %s \n",*(sql),(char *)(*(int *)(sql+1)));
 			if(yylex() == WHERE){
-				*(int32_t *)(sql + 5) = whereCompile();
-	 	 		return sql;
-		 	}
-		 }
-	  } 
+				*(intptr_t *)(sql + STMTYPE + DTNAME) = (intptr_t)whereCompile();
+	 	   		return sql;
+		   	}
+		  } 
+	  }  
 }
    
 /*
 	 识别简单update语句
  */
 void *  updateStm(){
-	char * sql;
+	char *sql; 
 	if( yylex()  ==  NAME){
-		char * tbname = malloc(sizeof(char) *( yylen + 1)) ;
-		strcpy(tbname, yyname);
+		char * tbname = yyname;
 		if(yylex() == SET){
-	 		Att_head * att_head = (Att_head *)malloc(sizeof(Att_head));
+	 		Att_head * att_head  = (Att_head *)malloc(sizeof(Att_head));
  	 		att_head->next = NULL;
 			att_head->end = NULL;
 			Va_head * va_head = (Va_head *)malloc(sizeof(Va_head));
@@ -423,7 +419,7 @@ void *  updateStm(){
 				att_node->next = NULL;
 				if(att_head->next == NULL){
 		 			att_head->next = att_node;
-	 				att_head->end = att_node;
+	 				att_head->end = att_node; 
 				}
 				else {
 	 	 			att_head->end->next = att_node;
@@ -439,24 +435,23 @@ void *  updateStm(){
 					//printf("tok2 new = %d\n",tok2);
 					if(tok2 == NUMBER){
 	 	 				va_node->flag = ATTRINT;					
-						va_node->vint = yynum;
+						va_node->vint = yynum; 
 				//		printf("等号右边数字 %d \n"，yynum);
-	 					//printf(" = youbian = %d \n",yynum);
+	 					//printf(" = youbian =  %d \n",yynum);
 					}
 					if(tok2 == NAME){
-	 	 			 	va_node->flag = ATTRCHAR;
+	 	 			 	va_node->flag = ATTRCHAR ;
 						va_node->vchar = yyname;
 						//printf("等号右边字符 %s \n",yyname);
 					}
 					if(va_head->next == NULL){
 	 	 			 	va_head->next = va_node;
 						va_head->end = va_node;
-						//printf("va_head->next->vint = %d \n",va_node->vint);
-
+						//printf("va_head->next->v int = %d \n",va_node->vint);
 					}
 					else{
 						va_head->end->next = va_node;
-	 					va_head->end = va_node;
+	 					va_head->end = va_node; 
 		 			 }
 				}
 				tok1 = yylex();
@@ -465,29 +460,31 @@ void *  updateStm(){
 				if(tok1 == WHERE){
 					sql = (char *)malloc(sizeof(char)*(STMTYPE + DTNAME +ATTRNUM +2*n*ATTRLEN + WHEREP));
 					*(sql) = UPD;
-					*(int32_t *)(sql + 1) = tbname;
-					*(int16_t *)(sql + 5) = n;
+					*(intptr_t *)(sql + STMTYPE) = (intptr_t)tbname;
+					*(int16_t *)(sql + STMTYPE + DTNAME) = n;
 					Att_node * cur_att_node = att_head->next;
 					int16_t i = 0;
 	 				while(cur_att_node != NULL){
-						*(int32_t  *)(sql + 7 + i*ATTRLEN) = cur_att_node;
+						*(intptr_t  *)(sql + STMTYPE + DTNAME + ATTRNUM + i*ATTRLEN) = (intptr_t)cur_att_node;
 						cur_att_node = cur_att_node->next;
 		 				i++;
 					}
 					Va_node * cur_va_node = va_head->next;
 					i = 0;
 					while(cur_va_node != NULL){
-						*(int32_t *)(sql +7 +n*ATTRLEN + i*ATTRLEN) = cur_va_node;
+						*(intptr_t *)(sql +STMTYPE + DTNAME +ATTRNUM +n*ATTRLEN + i*ATTRLEN) = (intptr_t)cur_va_node; 
 						cur_va_node = cur_va_node->next;
-		 		 		i++; 
+		  		 		i++; 
 					}
-		  			*(int32_t *)(sql + STMTYPE + DTNAME + ATTRNUM + 2*n*ATTRLEN) = whereCompile();
+		  			*(intptr_t *)(sql + STMTYPE + DTNAME + ATTRNUM + 2*n*ATTRLEN) = (intptr_t)whereCompile();
+					free(att_head);
+					free(va_head);
 					return sql;
-	 				break;
+	 	 			break; 
 				} 
-	  	 		break;
-	 		} 
- 	 	}
+	  	  		break; 
+	 	 	} 
+ 	 	} 
 	} 
 }
 
@@ -495,55 +492,57 @@ void *  updateStm(){
 	识别简单open 数据库语句
  */
 void * openStm(){
-	char * sql;
+	char * sql; 
 	if(yylex() == NAME){
-		sql = (char *)malloc(sizeof(char)*(STMTYPE + DTNAME));
+	 	sql = (char *)malloc(sizeof(char)*(STMTYPE + DTNAME));
 		*(sql) = OPEND;
-		*(int32_t *)(sql + 1) = yyname;
+		*(intptr_t *)(sql + STMTYPE) = (intptr_t)yyname;
 	 	return sql;
-	} 
+	}  
 }
 
 /*
 	返回一个void *sql指针，指向识别之后的内存片
  */
+
 void * summerCompile(){
  	void * sql;
+	char p[90];
 	switch(yylex()){
  		case CREATE:{
 	 		sql = createStm();
-			 break;
+		 	break;
 		}
 		case DROP :{
-			sql = dropStm();	
+		 	sql = dropStm();	
 		 	break;
 		}
 		case SELECT :{
  			sql = selectStm();	
-			break;
+		 	break;
 		}
 		case INSERT :{
- 			sql = insertStm();	
+ 		 	sql = insertStm();	
 			break;
 		}
 		case DELETE : {
  			sql = deleteStm();
-			break; 
+		 	break; 
 		}
 		case UPDATE :{
 			sql = updateStm();
-	 		break;
+	 	 	break;
 		}
 		case OPEN :{
 			sql = openStm();
-			break;
+		 	break;
 		}
 		default : {
 		 	printf("不支持这种语句;\n");	
 			break;
-	  	} 
-	 } 
-	return sql;  
+	  	}   
+	} 
+	return sql;    
 }
 
 

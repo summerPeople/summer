@@ -4,12 +4,12 @@
 #include "../../sysconf/SQLtype.h"
 
 #define STMTYPE 1 //语句类型，对应SQLtype.h中的宏定义语句类型
-#define DTNAME  4 //数据库或者表的名字的指针
+#define DTNAME  8 //数据库或者表的名字的指针
 #define ATTRNUM 2	//属性的个数
-#define ATTRLEN 4 //指向每一个属性的指针
-#define WHEREP 4 //指向where子句的指针
+#define ATTRLEN 8 //指向每一个属性的指针
+#define WHEREP 8 //指向where子句的指针
 #define VALUENUM 2
-#define VALUEP 4  //指向value子句的指针
+#define VALUEP 8  //指向value子句的指针
 
 enum token_type{
  	SEM = 1,	//;

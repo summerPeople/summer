@@ -16,8 +16,8 @@
 "insert"|"INSERT"	 {return INSERT;}
 "into"|"INTO"		 {return INTO;}
 "open"|"OPEN"        {return OPEN;}
-[(]					 {printf("识别zuo括号\n");return LEFTBRAC;}
-[)]					 {printf("识别you括号\n");return RIGHTBRAC;}
+[(]					 {return LEFTBRAC;}
+[)]					 {return RIGHTBRAC;}
 "values"|"VALUES"	 {return VALUES;}
 "delete"|"DELETE"	 {return DELETE;}
 "update"|"UPDATE"	 {return UPDATE;}
@@ -29,7 +29,7 @@
 "primary key"|"PRIMARY KEY" {return PRIMARYKEY;}
 "and"|"AND"			{return AND;}
 "or"|"OR"			{return OR;}
-","					{printf("匹配逗号");return COMMA;}
+","					{return COMMA;}
 [a-zA-Z]+	 {yyname = (char *)malloc(sizeof(char)*(yyleng+1));yylen = yyleng+1; strcpy(yyname,yytext); return NAME;}
 [0-9]+		 {yynum=atoi(yytext); return NUMBER;}
 ";"		 {return SEM;}
