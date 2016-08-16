@@ -5,10 +5,381 @@
 #include<assert.h>
 #include<string.h>
 
+page_no summerBtreeWriteFreeSpecPage();
+
+
 /*
  * it is a btree created when application is starting
  */
 Btree* global_btree = NULL;
+
+
+/*
+ * free a MemPage
+ */
+static
+void btreeFreeMemPage(MemPage* page){
+	free(page->header);
+	free(page->offsets);
+	free(page);
+}
+
+/*
+ * init BtCursor to spec page(only one)
+ */
+static 
+void btreeInitCursorSpec(){
+	BtCursor* cursor = global_btree->btCursor;
+	int i = cursor->trace_index;
+	while(i > 1){
+		btreeFreeMemPage((cursor->trace)[i]);
+	}
+	cursor->trace_index = 0;
+}
+
+/*
+ * init BtCursor to root page, memPages in trace must be free
+ */
+static 
+void btreeInitCursorRoot(){
+	BtCursor* cursor = global_btree->btCursor;
+	int i = cursor->trace_index;
+	while(i > 0){
+		btreeFreeMemPage((cursor->trace)[i]);
+	}
+	cursor->trace_index = 1;
+}
+
+/*
+ * find the table tuple in in_which_table, it is a spec table
+ * when return 0, tuple accord has found, return -1, not found
+ * location is stored in BtCursor
+ */
+static
+int btreeFindSpecLocation(char* in_which_table, char* table_name){
+	//init Cursor to rootpage
+	BtCursor* cursor = global_btree->btCursor;	
+	btreeInitCursorRoot();
+	//find the second page
+	MemPage* spec_page = NULL;
+	if(strcmp("_master", in_which_table) == 0){
+		spec_page = (MemPage*)pager.getMemPage(pager.getPage(1));
+		spec_page->pageno = 1;
+	}
+	else if(strcmp("_scheme", in_which_table) == 0){
+		spec_page = (MemPage*)pager.getMemPage(pager.getPage(2));
+		spec_page->pageno = 2;
+	}
+	else if(strcmp("_lock", in_which_table) == 0){
+		spec_page = (MemPage*)pager.getMemPage(pager.getPage(3));
+		spec_page->pageno = 3;
+	}
+	else if(strcmp("_sequence", in_which_table) == 0){
+		spec_page = (MemPage*)pager.getMemPage(pager.getPage(4));
+		spec_page->pageno = 4;
+	}
+	page_no next_spec_pageno = spec_page->header->pageno;
+	cursor->trace_index++;
+	(cursor->trace)[cursor->trace_index] = spec_page;
+	//in spec table we find the tuple whose table name is table_name
+	tuple* tuple_out = (tuple*)malloc(sizeof(tuple));
+	assert(tuple_out);
+	while(spec_page != NULL){
+		//we lookup each tuple if it is table table_name
+		for(CURRENT_CELL_INDEX = 0; CURRENT_CELL_INDEX < spec_page->cell_num;
+				CURRENT_CELL_INDEX++){
+			int16_t offset = *(spec_page->offsets + CURRENT_CELL_INDEX);
+			pager.getTuple(spec_page->page_space, offset, tuple_out);
+			char* tuple_char = (char*)tuple_out;
+			int16_t* attr_num = (int16_t*)(tuple_char + 12);
+			char* table_name_spec = tuple_char + 14 + 2*(*attr_num);
+			if(strcmp(table_name, table_name_spec) == 0){      //we find the table
+				free(tuple_out);
+				return 0;	
+			}
+		}
+		//we dont find the table in the master page
+		if(next_spec_pageno == -1){
+			spec_page = NULL;
+		}else{
+			spec_page = (MemPage*)pager.getMemPage(pager.getPage(next_spec_pageno));
+			spec_page->pageno = next_spec_pageno;
+			next_spec_pageno = spec_page->header->pageno;
+			cursor->trace_index++;
+			(cursor->trace)[cursor->trace_index] = spec_page;
+		}
+	}
+	free(tuple_out);
+	return -1;	
+}
+
+/*
+ * find the location of the akey
+ * before the function, you must call btreeFindDataTable()
+ * if return -1, we find the location whose key less than akey a little
+ * if return 0, we find the location whose key equals akey
+ * if return 1, we find the location whose key larger than akey a little
+ */
+static 
+int btreeFindDataLocation(int64_t akey){
+	BtCursor* cursor = global_btree->btCursor;	
+	MemPage* compare_page = (cursor->trace)[cursor->trace_index];
+	tuple* compare_tuple = (tuple*)malloc(sizeof(tuple));
+	while(compare_page->header->type != 3){   //if it is not a leaf page, we find the leaf
+		for(CURRENT_CELL_INDEX = 0; CURRENT_CELL_INDEX < compare_page->cell_num;
+				CURRENT_CELL_INDEX++){
+			int16_t offset = (compare_page->offsets)[CURRENT_CELL_INDEX];
+			pager.getTuple(compare_page->page_space, offset, compare_tuple);
+			int64_t tuple_key = pager.getTupleKey(compare_tuple);
+			if(akey <= tuple_key){
+				char* tuple_char = (char*)compare_tuple;
+				page_no child_pageno = *((page_no*)(tuple_char + 26)); 
+				compare_page = (MemPage*)pager.getMemPage(pager.getPage(child_pageno));
+				compare_page->pageno = child_pageno;
+				cursor->trace_index++;
+				(cursor->trace)[cursor->trace_index] = compare_page;
+			}
+		}
+	}
+	//now we find the leaf page which besides the akey, akey can only be found in the page
+	//or in head or tail of the page
+	for(CURRENT_CELL_INDEX = 0; CURRENT_CELL_INDEX < compare_page->cell_num;
+			CURRENT_CELL_INDEX++){
+		int16_t offset = (compare_page->offsets)[CURRENT_CELL_INDEX];
+		pager.getTuple(compare_page->page_space, offset, compare_tuple);
+		int64_t tuple_key = pager.getTupleKey(compare_tuple);
+		if(akey < tuple_key){
+			if(CURRENT_CELL_INDEX == 0){
+				return -1;
+			}else{
+				CURRENT_CELL_INDEX++;
+				return 1;
+			}
+		}else if(akey == tuple_key){
+			return 0;
+		}
+	}
+	if(CURRENT_CELL_INDEX == compare_page->cell_num - 1){
+		free(compare_tuple);
+		return -1;
+	}
+	if(compare_page->cell_num == 0){
+		free(compare_tuple);
+		return 0;
+	}
+	
+	free(compare_tuple);
+}
+
+/*
+ * find table table,when it return, cursor is in the table's first cell 
+ */
+static 
+int btreeFindDataTable(char* table_name){
+	if(btreeFindSpecLocation("_master", table_name) == 0){
+		BtCursor* cursor = global_btree->btCursor;
+		MemPage* find_page = (cursor->trace)[CURRENT_CELL_INDEX];
+		tuple* tuple_out = (tuple*)malloc(sizeof(tuple));
+		assert(tuple_out);
+		int16_t offset = (find_page->offsets)[CURRENT_CELL_INDEX];
+		pager.getTuple(find_page->page_space, offset, tuple_out);
+		page_no* pageno = (page_no*)((char*)tuple_out + 92);
+		find_page = pager.getMemPage(pager.getPage(*pageno));
+		btreeInitCursorSpec();
+		cursor->trace_index++;
+		CURRENT_MEMPAGE = find_page;
+		CURRENT_CELL_INDEX = 0;
+	}
+	else{
+		return -1;
+	}
+}
+
+/*
+ * find the sequence_id of table_name in sequence table
+ * if update_flag == 1, update, if == 0, do not update
+ * it will return the old sequence id in sequence table
+ */
+static
+int64_t btreeFindOrUpdateSequenceId(char* table_name, int update_flag){
+	if(btreeFindSpecLocation("_sequence", table_name) == 0){
+		BtCursor* cursor = global_btree->btCursor;	
+		MemPage* sequence_page = CURRENT_MEMPAGE;	
+		tuple* tuple_out = (tuple*)malloc(sizeof(tuple));
+		assert(tuple_out);
+		int16_t offset = *(sequence_page->offsets + CURRENT_CELL_INDEX);
+		pager.getTuple(sequence_page->page_space, offset, tuple_out);
+		int64_t* table_sequence_id = (int64_t*)((char*)tuple_out + 82);
+		int64_t sequence_id = *table_sequence_id;
+		if(update_flag == 0){    //update the sequence id
+			*table_sequence_id = *table_sequence_id + 1;
+		}
+		free(tuple_out);
+		return sequence_id;
+	}
+	else{
+		return -1;
+	}
+}
+
+/*
+ * find one by one to confirm if the tuple accord where clause
+ * for innner page, get child whose location is in cursor
+ * for leaf page, get next tuple 
+ * return 0,find a tuple ,return -1, selection is over
+ */
+static
+int btreeSequencialSelect(char* table_name, void* where_clause){
+	BtCursor* cursor = global_btree->btCursor;
+	if(cursor->trace_index == 0){
+		btreeFindDataTable(table_name);
+	}
+	MemPage* current_page = CURRENT_MEMPAGE; 
+		
+	tuple* tuple_out = (tuple*)malloc(sizeof(tuple));
+	assert(tuple_out);
+
+	while(1){			//if has not found a tuple and does not reach over
+		pager.updateMemPage(current_page);      //update the mem page
+		//if we are in master page, then selection is over
+		if(current_page->pageno == 1){
+			free(tuple_out);
+			cursor->trace_index--;
+			btreeFreeMemPage(current_page);
+			return -1;
+		}
+
+		if(current_page->header->type == 2){    //now we are in inner node
+			if(CURRENT_CELL_INDEX = current_page->cell_num + 1){  //we return to right most child
+				cursor->trace_index--;
+				btreeFreeMemPage(current_page);
+				current_page = CURRENT_MEMPAGE;
+				CURRENT_CELL_INDEX++;
+			}
+			else if(CURRENT_CELL_INDEX == current_page->cell_num){
+				//get the right most child
+				page_no most_child_pageno = current_page->header->pageno;
+				current_page = (MemPage*)pager.getMemPage(pager.getPage(most_child_pageno));
+				cursor->trace_index++;
+				CURRENT_MEMPAGE = current_page;
+				CURRENT_CELL_INDEX = 0;
+			}else{
+				//get the child page
+				int16_t offset = (current_page->offsets)[CURRENT_CELL_INDEX];
+				pager.getTuple(current_page->page_space, offset, tuple_out);
+				char* tuple_char = (char*)tuple_out;
+				page_no child_pageno = *((page_no*)(tuple_char + 26)); 
+				current_page = (MemPage*)pager.getMemPage(pager.getPage(child_pageno));
+				cursor->trace_index++;
+				CURRENT_MEMPAGE = current_page;
+				CURRENT_CELL_INDEX = 0;
+			}
+		}
+		else if(current_page->header->type == 3){    //now we are in leaf node
+			for(CURRENT_CELL_INDEX = CURRENT_CELL_INDEX + 1;
+					CURRENT_CELL_INDEX < current_page->cell_num;
+					CURRENT_CELL_INDEX++){
+				int16_t offset = (current_page->offsets)[CURRENT_CELL_INDEX];
+				pager.getTuple(current_page->page_space, offset, tuple_out);
+				//if we find a tuple accord the where clause
+				if(pager.isTupleAccordWhere(tuple_out, where_clause) == 0){
+					free(tuple_out);
+					return 0;
+				}
+			}
+			//if this page has been selected over, we go to it's parent
+			if(CURRENT_CELL_INDEX == current_page->cell_num){
+				cursor->trace_index--;
+				btreeFreeMemPage(current_page);	
+				current_page = CURRENT_MEMPAGE;
+				CURRENT_CELL_INDEX++;
+			}
+		}
+	}
+}
+
+/*
+ * insert tuple into spec table
+ */
+ static 
+ page_no btreeInsertSpecTuple(char* table_name, tuple* tuple_ptr){
+	//init Cursor to rootpage
+	BtCursor* cursor = global_btree->btCursor;	
+	btreeInitCursorRoot();
+	//find the second page
+	MemPage* special_page = NULL;
+	if(strcmp("_master", table_name) == 0){
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(1));
+		special_page->pageno = 1;
+	}
+	else if(strcmp("_scheme", table_name) == 0){
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(2));
+		special_page->pageno = 2;
+	}
+	else if(strcmp("_lock", table_name) == 0){
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(3));
+		special_page->pageno = 3;
+	}
+	else if(strcmp("_sequence", table_name) == 0){
+		special_page = (MemPage*)pager.getMemPage(pager.getPage(4));
+		special_page->pageno = 4;
+	}
+	if(special_page != NULL){
+		MemPage* insert_mem_page = special_page;
+		page_no next_page = insert_mem_page->header->pageno;
+		//find the page we can insert
+		while(insert_mem_page->header->fs_size < 2 + tuple_ptr->size){
+			if(next_page == -1){
+				break;
+			}else{
+				insert_mem_page = (MemPage*)pager.getMemPage(pager.getPage(next_page));
+				insert_mem_page->pageno = next_page;
+				next_page = insert_mem_page->header->pageno;
+			}
+		}
+
+		if(insert_mem_page->header->fs_size >= 2 + tuple_ptr->size){       //we find the insert page
+			pager.insertTuple(insert_mem_page->page_space, tuple_ptr);
+			return insert_mem_page->pageno;
+		}
+		else{
+			//it is not over
+			page_no new_pageno =  summerBtreeWriteFreeSpecPage();
+			return -1;
+		}
+	}
+	else{
+		return -1;
+	}
+ }
+
+/*
+ * insert tuple into data table
+ * before this we find the data table
+ */
+static
+page_no btreeInsertDataTuple(char* table_name, tuple* tuple_ptr){
+
+}
+
+/*
+ * balance the BTree, if tuple_ptr != NULL, it is insertion balance
+ * if tuple_ptr == NULL, it is delete or update(update = insert and update)
+ * before this, you should find the location
+ */
+static 
+void btreeBalance(tuple* tuple_ptr){
+	BtCursor* cursor = global_btree->btCursor;
+	//get location page op occurs
+	MemPage* op_page = (cursor->trace)[cursor->trace_index];
+	if(tuple_ptr != NULL){
+
+	}
+}
+
+/************************************************************************************************************/
+/*********************************************** interface for others ***************************************/
+/************************************************************************************************************/
 
 /*
  * create a btree, but only one page, it is page0
@@ -36,12 +407,9 @@ void summerBtreeCreateBtree(){
 	//create btree cursor
 	BtCursor* cursor = (BtCursor*)malloc(sizeof(BtCursor));
 	assert(cursor);
-	cursor->cell_index = 0;
+	CURRENT_CELL_INDEX = 0;
 	cursor->trace_index = 0;
-	(cursor->trace)[0] = page0;
-	for(int i = 1; i < BTREE_MAX_DEEP; i++){
-		(cursor->trace)[i] = NULL;
-	}
+	CURRENT_MEMPAGE = page0;
 
 	btree->btShared = btShared;
 	btree->rootPage = page0;
@@ -53,20 +421,18 @@ void summerBtreeCreateBtree(){
 /*
  * delete btree
  */
-void summerBtreeDelete(){
+void summerBtreeDeleteBtree(){
 	free(global_btree->btShared->file_header);
 	free(global_btree->btShared->pager);
 	free(global_btree->btShared);
 
 	for(int i = 0; i <= global_btree->btCursor->trace_index; i++){
-		free(((global_btree->btCursor->trace)[i])->header);
-		free((global_btree->btCursor->trace)[i]);
+		btreeFreeMemPage((global_btree->btCursor->trace)[i]);
 	}
 	free(global_btree->btCursor);
 	//free mem pool
 	freeMemPool();
 }
-
 
 /*
  * create db file
@@ -97,6 +463,17 @@ void summerBtreeCreateDbFile(char* file_name){
 }
 
 /*
+ * delete db file
+ */
+int summerBtreeDeleteDbFile(char* file_name){
+	return pager.deleteDbFile(file_name);
+}
+
+int summerBtreeOpenDbFile(char* file_name){
+	return pager.openDbFile(file_name);
+}
+
+/*
  * write a new free data page into db file
  */
 page_no summerBtreeWriteFreeDataPage(){
@@ -121,158 +498,26 @@ page_no summerBtreeWriteFreeSpecPage(){
 }
 
 /*
- * insert tuple into data table
- * before this we find the data table
+ * get sequence id and update it to sequenceId + 1
  */
-static
-void btreeInsertDataTuple(char* table_name, tuple* tuple_ptr){
-
+int64_t summerBtreeGetSequenceId(char* table_name){
+	return btreeFindOrUpdateSequenceId(table_name, 0);
 }
 
 /*
- * find the table in master table
- * when return 0, the first page of data table is in cursor
+ * insert tuple into special table, but it is also the entrance of 
+ * insertion into data table, only special table name starts with '_'
  */
-static
-int btreeFindDataTable(char* table_name){
-	//init Cursor to rootpage
-	BtCursor* cursor = global_btree->btCursor;	
-	cursor->trace_index = 0;
-	MemPage* master_page = (MemPage*)pager.getMemPage(pager.getPage(1));
-	master_page->pageno = 1;
-	page_no next_master_pageno = master_page->header->pageno;
-	cursor->trace_index++;
-	(cursor->trace)[cursor->trace_index] = master_page;
-	//in master table we find the first page of data table
-	tuple* tuple_out = (tuple*)malloc(sizeof(tuple));
-	while(master_page != NULL){
-		//we lookup each tuple if it is table table_name
-		assert(tuple_out);
-		for(cursor->cell_index = 0; cursor->cell_index < master_page->cell_num;
-				cursor->cell_index++){
-			int16_t offset = *(master_page->offsets + cursor->cell_index);
-			pager.getTuple(master_page->page_space, offset, tuple_out);
-			char* table_name_master = (char*)tuple_out + 23;
-			if(strcmp(table_name, table_name_master) == 0){      //we find the table
-				int32_t* table_first_pageno = (int32_t*)(table_name_master + 64 + 4);
-				MemPage* table_first_page = 
-					(MemPage*)pager.getMemPage(pager.getPage(*table_first_pageno));
-				table_first_page->pageno = *table_first_pageno;
-				cursor->trace_index++;
-				(cursor->trace)[cursor->trace_index] = table_first_page;
-				free(tuple_out);
-				return 0;	
-			}
-		}
-		//we dont find the table in the master page
-		if(next_master_pageno == -1){
-			master_page = NULL;
-		}else{
-			master_page = (MemPage*)pager.getMemPage(pager.getPage(next_master_pageno));
-			next_master_pageno = master_page->header->pageno;
-		}
-	}
-	free(tuple_out);
-	return -1;	
-}
-
-/*
- * find the sequence_id of table_name in sequence table
- * if update_flag == 1, update, if == 0, do not update
- * it will return the old sequence id in sequence table
- */
-int64_t summerBtreeFindOrUpdateSequenceId(char* table_name, int update_flag){
-	//init Cursor to rootpage
-	BtCursor* cursor = global_btree->btCursor;	
-	cursor->trace_index = 0;
-	MemPage* sequence_page = (MemPage*)pager.getMemPage(pager.getPage(4));
-	sequence_page->pageno = 4;
-	page_no next_sequence_pageno = sequence_page->header->pageno;
-	cursor->trace_index++;
-	(cursor->trace)[cursor->trace_index] = sequence_page;
-	//in sequence table we find the tuple of table_name
-	tuple* tuple_out = (tuple*)malloc(sizeof(tuple));
-	while(sequence_page != NULL){
-		//we lookup each tuple if it is table table_name
-		assert(tuple_out);
-		for(cursor->cell_index = 0; cursor->cell_index < sequence_page->cell_num;
-				cursor->cell_index++){
-			int16_t offset = *(sequence_page->offsets + cursor->cell_index);
-			pager.getTuple(sequence_page->page_space, offset, tuple_out);
-			char* table_name_sequence = (char*)tuple_out + 18;
-			if(strcmp(table_name, table_name_sequence) == 0){
-				int64_t* table_sequence_id = (int64_t*)(table_name_sequence + 64);
-				int64_t sequence_id = *table_sequence_id;
-				if(update_flag == 0){    //update the sequence id
-					*table_sequence_id = *table_sequence_id + 1;
-				}
-				free(tuple_out);
-				return sequence_id;
-			}
-		}
-		//we dont find the table in the master page
-		if(next_sequence_pageno == -1){
-			sequence_page = NULL;
-		}else{
-			sequence_page = (MemPage*)pager.getMemPage(pager.getPage(next_sequence_pageno));
-			next_sequence_pageno = sequence_page->header->pageno;
-		}
-	}
-	free(tuple_out);
-	return -1;
-}
-
-/*
- * insert tuple into special table
- */
-page_no summerBtreeInsert(char* table_name, tuple* tuple_ptr){
-	//find the second page
-	MemPage* special_page = NULL;
-	if(strcmp("_master", table_name) == 0){
-		special_page = (MemPage*)pager.getMemPage(pager.getPage(1));
-		special_page->pageno = 1;
-	}
-	else if(strcmp("_scheme", table_name) == 0){
-		special_page = (MemPage*)pager.getMemPage(pager.getPage(2));
-		special_page->pageno = 2;
-	}
-	else if(strcmp("_lock", table_name) == 0){
-		special_page = (MemPage*)pager.getMemPage(pager.getPage(3));
-		special_page->pageno = 3;
-	}
-	else if(strcmp("_sequence", table_name) == 0){
-		special_page = (MemPage*)pager.getMemPage(pager.getPage(4));
-		special_page->pageno = 4;
+page_no summerBtreeInsertTuple(char* table_name, tuple* tuple_ptr){
+	//find if table_name is spec table or not
+	if(*table_name == '_'){
+		return btreeInsertSpecTuple(table_name, tuple_ptr);
 	}
 	else{
-		btreeInsertDataTuple(table_name, tuple_ptr);
-	}
-	//we insert into special table
-	if(special_page != NULL){
-		MemPage* insert_mem_page = special_page;
-		page_no next_page = insert_mem_page->header->pageno;
-		//find the page we can insert
-		while(insert_mem_page->header->fs_size < 2 + tuple_ptr->size){
-			if(next_page == -1){
-				break;
-			}else{
-				insert_mem_page = pager.getMemPage(pager.getPage(next_page));
-				insert_mem_page->pageno = next_page;
-				next_page = insert_mem_page->header->pageno;
-			}
-		}
-
-		if(insert_mem_page->header->fs_size >= 2 + tuple_ptr->size){       //we find the insert page
-			pager.insertTuple(insert_mem_page->page_space, tuple_ptr);
-			return insert_mem_page->pageno;
-		}
-		else{
-			//it is not over
-			page_no new_pageno =  summerBtreeWriteFreeSpecPage();
-			return -1;
-		}
-	}
-	else{
-		return -1;
+		return btreeInsertDataTuple(table_name, tuple_ptr);
 	}
 }
+
+/*
+ * delete tuple
+ */

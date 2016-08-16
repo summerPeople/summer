@@ -8,9 +8,13 @@ extern void summerSetFP(FILE* file_ptr);
 /*
  * open a specifical database file
  */
-void summerPagerOpenDbFile(char* file_name){ 
+int summerPagerOpenDbFile(char* file_name){ 
 	FILE* file_ptr = fopen(file_name, "rb+");	
-	summerSetFP(file_ptr);
+	if(file_ptr != NULL){
+		summerSetFP(file_ptr);
+		return 0;
+	}
+	return -1;
 }
 
 /*
@@ -19,6 +23,17 @@ void summerPagerOpenDbFile(char* file_name){
 void summerPagerCreateDbFile(char* file_name){
 	FILE* file_ptr = fopen(file_name, "wb");	
 	summerSetFP(file_ptr);
+}
+
+/*
+ * delete db file
+ */
+int summerPagerDeleteDbFile(char* file_name){
+	if(remove(file_name) == 0){
+		return 0;
+	}else{
+		return -1;
+	}
 }
 
 /*

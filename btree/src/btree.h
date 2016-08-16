@@ -10,6 +10,10 @@
 #include "configLoaderInt.h"
 
 #define BTREE_MAX_DEEP 10
+#define BTREE_MAX_CHILDS 134                         //how many childs inner nodes have
+
+#define CURRENT_CELL_INDEX  ((cursor->cell_index)[cursor->trace_index])   //current cell index
+#define CURRENT_MEMPAGE     ((cursor->trace)[cursor->trace_index])		  //current memPage
 
 /*
  * a cell stands for 
@@ -40,9 +44,9 @@ typedef struct MemPage{
  * BtCursor struct,it points to where we are looking up
  */
 typedef struct BtCursor{
-	int16_t cell_index;                      //index in MemPage.offsets
+	int16_t cell_index[BTREE_MAX_DEEP];      //index in MemPage.offsets
 	int16_t trace_index;                     //index in trace
-	MemPage* trace[BTREE_MAX_DEEP];           //those pages the cursor has moved
+	MemPage* trace[BTREE_MAX_DEEP];          //those pages the cursor has moved
 }BtCursor;
 
 /*

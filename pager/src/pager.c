@@ -14,8 +14,10 @@ Pager pager;
 void summerPagerCreatePager(){
 	pager.getPage = allocMemPoolPage;
 	pager.writePage = summerPagerWrite;
+
 	pager.openDbFile = summerPagerOpenDbFile;
 	pager.createDbFile = summerPagerCreateDbFile;
+	pager.deleteDbFile = summerPagerDeleteDbFile;
 
 	pager.getDbFileHead = getFileHead;
 
