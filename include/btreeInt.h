@@ -19,7 +19,10 @@ page_no summerBtreeInsertTuple(char* table_name, tuple* tuple_ptr);		//insert tu
 int summerBtreeDeleteTuple(char* table_name, void* where_clause);       //delete a tuple which accord where_clause
 tuple* summerBtreeSelectTuple(char* table_name, void* where_clause);    //select a tuple which accord where_clause
 int summerBtreeUpdateTuple(char*table_name);                            //update a tuple
+<<<<<<< HEAD
 tuple* summerBtreeSelectSpecTuple(char* in_which_table, char* table_name);  //select a tuple from spec table
+=======
+>>>>>>> 3cc01a222e74e44db82c4a9093227f5b97c1fbb0
 
 #endif
 
