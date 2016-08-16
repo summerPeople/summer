@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include  <stdint.h>
 #include "memoryPool.h"
 #include "pagerInt.h"
 #include "fileopInt.h"
@@ -64,9 +65,9 @@ void * allocMemPool(){
 	freeHead = (fHead *)malloc(sizeof(fHead));
 	freeHead->next = NULL;
 	freeHead->end = NULL;
-	int i=0;
+	int16_t i=0;
 	for(i=0;i<POOLSIZE;i++){
-		change_flag[i]=0;
+		ch ange_flag[i]=0;
 		} 
 	for(i=0;i<POOLSIZE;i++){
 		freeNode * newFreeNode = (freeNode *)malloc (sizeof(freeNode));
@@ -210,7 +211,27 @@ void freeMemPool(){
 		free(p);
 }
 
+/*
+set a flag indicating whether it has been     changed for every mem page in mem pool
+*/
 void setMemPoolFlag(void *mpp){
 	int n = (mpp-p)/PAGESIZE;
 	change_flag[n]=1;
+}
+
+/*
+return mp's diskpageno
+*/
+page_no getMemPoolPageno(void *mp){
+	int n = (mp - p)/PAGESIZE;
+	useNode * cur_node = uHead->next;
+	while(cur_node != NULL){
+		if(cur_node->memPage == n){
+			page_no diskPageno = cur_node->diskPage;
+			return diskPageno;
+			break;
+		}
+		cur_node = cur_node->next;
+	}
+	return -1;
 }

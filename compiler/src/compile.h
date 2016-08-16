@@ -1,8 +1,18 @@
-#define STMTYPE 1 //y
-#define DTNAME  4 //数据库或者表的名字的指针
+#ifndef _COMPILE_H
+#define _COMPILE_H
+
+#include "../../sysconf/SQLtype.h"
+
+#define STMTYPE 1 //语句类型，对应SQLtype.h中的宏定义语句类型
+#define DTNAME  8 //数据库或者表的名字的指针
+#define ATTRNUM 2	//属性的个数
+#define ATTRLEN 8 //指向每一个属性的指针
+#define WHEREP 8 //指向where子句的指针
+#define VALUENUM 2
+#define VALUEP 8  //指向value子句的指针
 
 enum token_type{
-	EOL = 0,
+ 	SEM = 1,	//;
 	CREATE = 2,
 	TABLE = 3,
 	DATABASE =4,
@@ -23,9 +33,39 @@ enum token_type{
 	INT = 19,
 	CHAR = 20,
 	VARCHAR = 21,
+	STAR = 22,
+	COMMA = 23,
+	NOTNULL = 24,
+	PRIMARYKEY = 25,
+	EQ = 26,	//=
+	LS = 27,	//<
+	LE = 28,	//<=
+	MO = 29,	// >
+	ME = 30,	// >=
+	QM = 31,	//quotation marks 引号 '
+	OR = 32,
+	AND = 33,
+	OPEN = 34,
 	ERROR = 99
 };
 
 int yynum;
 int yylen;
 char * yyname;
+
+typedef struct{
+	Attribute_type *next;
+ 	Attribute_type *end;	
+}Ct_head;   //创建表的时候的属性的头节点
+
+typedef struct {
+ 	Va_node *next;
+	Va_node *end;
+}Va_head;
+
+typedef struct {
+	Att_node *next;
+ 	Att_node *end;
+}Att_head;
+
+#endif
