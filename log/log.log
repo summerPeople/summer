@@ -11,3 +11,87 @@
 2016-8-14 20:34:45 [INFO] summer test start!
 2016-8-14 20:34:51 [INFO] compile complete!
 2016-8-14 20:34:51 [INFO] SQL Analyses complete!
+2016-8-17 19:57:44 [INFO] summer test start!
+2016-8-17 19:57:51 [INFO] compile complete!
+2016-8-17 19:57:51 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 19:57:51 [INFO] SQL Analyses complete!
+2016-8-17 19:57:51 [INFO] ###################summer execute begin.....##########################
+2016-8-17 19:57:51 [INFO] create database begin
+2016-8-17 19:57:51 [INFO] test
+2016-8-17 19:57:55 [INFO] compile complete!
+2016-8-17 19:57:55 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 19:57:55 [INFO] SQL Analyses complete!
+2016-8-17 19:57:55 [INFO] ###################summer execute begin.....##########################
+2016-8-17 19:57:55 [INFO] open database begin!
+2016-8-17 19:57:55 [INFO] test
+2016-8-17 19:58:5 [INFO] compile complete!
+2016-8-17 19:58:5 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 19:58:5 [INFO] 
+2016-8-17 19:58:5 [INFO] SQL Analyses complete!
+2016-8-17 19:58:5 [INFO] ###################summer execute begin.....##########################
+2016-8-17 19:58:5 [INFO] create table begin
+2016-8-17 19:58:5 [INFO] hello
+2016-8-17 19:58:8 [INFO] compile complete!
+2016-8-17 19:58:8 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 19:58:8 [INFO] SQL Analyses complete!
+2016-8-17 19:58:8 [INFO] ###################summer execute begin.....##########################
+2016-8-17 19:58:8 [INFO] select begin
+2016-8-17 19:58:8 [INFO] _scheme
+2016-8-17 19:59:50 [INFO] compile complete!
+2016-8-17 19:59:50 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 19:59:50 [INFO] SQL Analyses complete!
+2016-8-17 19:59:50 [INFO] ###################summer execute begin.....##########################
+2016-8-17 19:59:50 [INFO] select begin
+2016-8-17 19:59:50 [INFO] _master
+2016-8-17 20:1:44 [INFO] summer test start!
+2016-8-17 20:1:48 [INFO] compile complete!
+2016-8-17 20:1:48 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:1:48 [INFO] SQL Analyses complete!
+2016-8-17 20:1:48 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:1:48 [INFO] open database begin!
+2016-8-17 20:1:48 [INFO] test
+2016-8-17 20:2:8 [INFO] compile complete!
+2016-8-17 20:2:8 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:2:8 [INFO] 
+2016-8-17 20:2:8 [INFO] SQL Analyses complete!
+2016-8-17 20:2:8 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:2:8 [INFO] create table begin
+2016-8-17 20:2:8 [INFO] hello
+2016-8-17 20:2:19 [INFO] compile complete!
+2016-8-17 20:2:19 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:2:19 [INFO] SQL Analyses complete!
+2016-8-17 20:2:19 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:2:19 [INFO] select begin
+2016-8-17 20:2:19 [INFO] _scheme
+2016-8-17 20:2:55 [INFO] compile complete!
+2016-8-17 20:2:55 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:2:55 [INFO] SQL Analyses complete!
+2016-8-17 20:2:55 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:2:55 [INFO] select begin
+2016-8-17 20:2:55 [INFO] _master
+2016-8-17 20:5:14 [INFO] summer test start!
+2016-8-17 20:5:18 [INFO] compile complete!
+2016-8-17 20:5:18 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:5:18 [INFO] SQL Analyses complete!
+2016-8-17 20:5:18 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:5:18 [INFO] open database begin!
+2016-8-17 20:5:18 [INFO] test
+2016-8-17 20:5:32 [INFO] compile complete!
+2016-8-17 20:5:32 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:5:32 [INFO] 
+2016-8-17 20:5:32 [INFO] SQL Analyses complete!
+2016-8-17 20:5:32 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:5:32 [INFO] create table begin
+2016-8-17 20:5:32 [INFO] hello
+2016-8-17 20:5:36 [INFO] compile complete!
+2016-8-17 20:5:36 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:5:36 [INFO] SQL Analyses complete!
+2016-8-17 20:5:36 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:5:36 [INFO] select begin
+2016-8-17 20:5:36 [INFO] _scheme
+2016-8-17 20:5:38 [INFO] compile complete!
+2016-8-17 20:5:38 [INFO] ###################suumer Analyse begin.....##########################
+2016-8-17 20:5:38 [INFO] SQL Analyses complete!
+2016-8-17 20:5:38 [INFO] ###################summer execute begin.....##########################
+2016-8-17 20:5:38 [INFO] select begin
+2016-8-17 20:5:38 [INFO] _scheme

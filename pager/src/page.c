@@ -18,18 +18,20 @@ statement:
 */
 void insertTuple(void *page_ptr, tuple *tuple_ptr)
 {
-	int16_t *pn = (int16_t *)(page_ptr + 1);
 	//the offset of insert_tuple
-	*pn = *(int *)(page_ptr + 1) + *(int16_t *)(page_ptr + 8) - tuple_ptr->size;
+    int16_t	pn = *(int16_t *)(page_ptr + 1) + *(int16_t *)(page_ptr + 9) - tuple_ptr->size;
+	//keep the offset
+	*(int16_t *)(*(int16_t *)(page_ptr + 1) + page_ptr) = pn;
 	//insert the tuple
-	memcpy(page_ptr + *pn, tuple_ptr->ptr, tuple_ptr->size);
+	memcpy(page_ptr + pn, tuple_ptr->ptr, tuple_ptr->size);
 	//update the tuple_count
 	*((int16_t *)(page_ptr + 3)) += 1;
 	//update fs_size
-	*((int16_t *)(page_ptr + 9)) = *((int16_t *)(page_ptr + 8)) - tuple_ptr->size;
+	*((int16_t *)(page_ptr + 9)) = *((int16_t *)(page_ptr + 9)) - tuple_ptr->size - 2;
 	//update the start
     *((int16_t *)(page_ptr + 1)) = *((int16_t *)(page_ptr + 1)) + 2;
-	
+
+
 /*	head_info *head = (head_info *)page_ptr;
 	void *pnew = page_ptr + head->start + head->fs_size - tuple->size;
 	//insert the tuple
@@ -83,13 +85,16 @@ void updateTuple()
 void getTuple(void *page_ptr, int16_t offset, tuple *temp)
 { 
 	void *tuple_ptr = page_ptr + offset;
-	int16_t n = *(int16_t *)(tuple_ptr + 4);
+	int16_t attr_num = *(int16_t *)(tuple_ptr + 12);
+	int16_t *length = (int16_t *)(tuple_ptr + 14);
 	//calc the size of the tuple
-	int *p = (int *)(tuple_ptr + 6);
-	int size = 4 + 2 + 4 * n;
+	int16_t head_size = 4 + 8 + 2 + attr_num * 2;
+	int16_t size = 0;
+	// head_size + length of tname:64
+	size += head_size + 64;
 	int i = 0;
-	for(i = 0; i < n; i++){
-		size += *(p + i);
+	for(i = 0; i < attr_num; i++){
+		size += *(length + i);
  	}
 	temp->ptr = tuple_ptr;
 	temp->size = size;	
@@ -121,6 +126,7 @@ void initDataPageHead(void *page_ptr, char type)
 { 
 	*(unsigned char *)page_ptr = type;
 	*(int16_t *)(page_ptr + 1) = 15;
+	printf("free space start:%d\n", *(int16_t *)(page_ptr + 1));
 	*(int16_t *)(page_ptr + 3) = 0;
 	*(int16_t *)(page_ptr + 7) = 0;
 	*(int16_t *)(page_ptr + 9) = config_info.page_size - DPHSIZE;
@@ -141,15 +147,12 @@ void initSpecTablePageHead(void *page_ptr)
 */
 void getDataPageHead(void *page_ptr, Data_page_head *head)
 {
-	printf("get page head\n");
-	printf("%p\n", page_ptr);
 	head->type = *(char *)page_ptr;
 	head->start = *(int16_t *)(page_ptr + 1);
-	printf("start : %d\n", head->start);
 	head->tuple_count = *(int16_t *)(page_ptr + 3);
 	head->fragment = *(int16_t *)(page_ptr + 7);
 	head->fs_size = *(int16_t *)(page_ptr + 9);
-	head->pageno = *(int *)(page_ptr + 11);
+	head->pageno = *(int32_t *)(page_ptr + 11);
 } 
 
 /*
@@ -163,16 +166,19 @@ void *getMemPage(void *page_ptr)
 	ptr->is_modify = 0;
 	ptr->header = head;
 	getDataPageHead(page_ptr, head);
-	printf("get head finished!\n");
+	printf("head start: %d\n", head->start);
 	ptr->cell_num = head->tuple_count;
 	ptr->offsets = (int16_t *)malloc(ptr->cell_num * sizeof(int16_t));
 	int32_t i = 0, k = 0;
 	int32_t offset;
 	//get the offset of undeleted tuples;
-	for(i = 0; i < head->start; i = i + 2){
-		offset = *(int16_t *)(page_ptr + DPHSIZE + i);
-		if(*(page_no *)(page_ptr + offset) != -1)
+	for(i = DPHSIZE; i < head->start; i = i + 2){
+		offset = *(int16_t *)(page_ptr + i);
+		if(*(page_no *)(page_ptr + offset) != -1){
 			ptr->offsets[k] = offset;
+		//	printf("offset: %d\n", offset);
+			k++;
+		}
 	 }
 	return ptr;
 }

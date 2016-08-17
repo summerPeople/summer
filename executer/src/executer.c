@@ -24,12 +24,12 @@
 */
 void summerSqlAnalyse(void *sql, void **_out_info, void **_out_parameter)
 {  
-//	printf("hello\n");
 	LOG(INFO, "###################suumer Analyse begin.....##########################");
 	 Execute_info *info = (Execute_info *)malloc(sizeof(Execute_info));
 	 info->type = *(unsigned char *)sql;
 	 void *parameter;
 	 *_out_info = info;
+	 printf("%d\n", info->type);
    	  switch(info->type){  
 		case OPEND:
 			    //sql format
@@ -618,7 +618,7 @@ void executeSelect(char *tname, void *ptr)
 {
 	LOG(INFO, "select begin");
 	LOG(INFO, tname);
-//	bt.btreeSelectFromSpecialTable(tname, "hello");
+	bt.btreeSelectFromSpecialTable(tname, "hello");
 
 }
 
