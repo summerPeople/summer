@@ -150,12 +150,12 @@ void * allocMemPoolPage(page_no n){
    			useHead->end = newUseNode;
 				
 			//*(int *)(p+PAGESIZE*curFreeNode->freeMemPage)=n;
-		//	free(curFreeNode);
+			//free(curFreeNode);
 			//LOG(DEBUG,"[内存池]|分配函数，新分配一个内存池中的页”);
-			printf("pageno:%d\n", n);
-			int res = summerPagerRead(n,p+PAGESIZE*curFreeNode->freeMemPage);
-			printf("read result:%d\n", res);
-			return p+PAGESIZE*curFreeNode->freeMemPage;
+			summerPagerRead(n,p+PAGESIZE*curFreeNode->freeMemPage);
+			int memp = curFreeNode->freeMemPage; 
+			free(curFreeNode);
+			return p+PAGESIZE*memp;
 	 	 	}
 	//no free page left ,use LRU to substitute	
 	else {
@@ -175,8 +175,8 @@ void * allocMemPoolPage(page_no n){
 print the allocation of the MemeryPool
 */
 void printMemPoolAlloc(){
-	if(p == NULL){
-		// printf("no MemoryPool !\n");
+	if(p == NU LL){
+		// prin tf("no MemoryPool !\n");
 		//LOG(DEBUG,"[内存池]，打印内存分配");
  		return;
 	}
@@ -184,7 +184,7 @@ void printMemPoolAlloc(){
 	useNode * curUseNode = useHead->next;
 	int i=0;
 	while(curUseNode !=NULL){
-		printf("%d  memoryAddress: %p ,memoryPageNum %d , memoryDiskNUm %d;\n",i++,p+PAGESIZE*curUseNode->memPage,curUseNode->memPage,curUseNode->diskPage);
+		printf(" %d  memoryAddress: %p ,memoryPageNum %d , memoryDiskNUm %d;\n",i++,p+PAGESIZE*curUseNode->memPage,curUseNode->memPage,curUseNode->diskPage);
 		curUseNode = curUseNode->next; 
 	}
  	return;

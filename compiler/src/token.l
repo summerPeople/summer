@@ -6,9 +6,9 @@
 %}
 
 %%
-"create"|"CREATE"	 {printf("%s",yytext);return CREATE;}		
+"create"|"CREATE"	 {return CREATE;}		
 "table"|"TABLE"		 {return TABLE;}
-"database"|"DATABASE"   {printf("%s",yytext);return DATABASE;}
+"database"|"DATABASE"   {return DATABASE;}
 "drop"|"DROP"		 {return DROP;}
 "select"|"SELECT"	 {return SELECT;}
 "from"|"FROM"		 {return FROM;}
@@ -30,9 +30,9 @@
 "and"|"AND"			{return AND;}
 "or"|"OR"			{return OR;}
 ","					{return COMMA;}
-_?[a-zA-Z][0-9a-zA-Z]+	 {printf("%s",yytext);yyname = (char *)malloc(sizeof(char)*(yyleng+1));yylen = yyleng+1; strcpy(yyname,yytext); return NAME;}
+_?[a-zA-Z][0-9a-zA-Z]*	 {yyname = (char *)malloc(sizeof(char)*(yyleng+1));yylen = yyleng+1; strcpy(yyname,yytext); return NAME;}
 [0-9]+		 {yynum=atoi(yytext); return NUMBER;}
-";"		 {printf("%s",yytext);return SEM;}
+";"		 {return SEM;}
 [ \t]		 {/*忽略空白字符*/}
 "*"			 {return STAR;}
 "="			 {return EQ;}
@@ -41,7 +41,7 @@ _?[a-zA-Z][0-9a-zA-Z]+	 {printf("%s",yytext);yyname = (char *)malloc(sizeof(char
 ">"			 {return MO;}
 ">="		 {return ME;}
 "'"			 {return QM;}
-.			 {printf("error\n");}
+.			 {printf("input error %s\n",yytext);}
 
 %%
 
