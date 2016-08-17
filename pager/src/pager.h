@@ -10,6 +10,7 @@
 typedef struct Pager{
 	void* (*getPage)(page_no pageno);                       //get a page and return it , not memPage
 	void* (*getMemPage)(void* page);                        //get a mempage and return it , you should cast it to a mem page 
+	void* (*getRootMemPage)(void* page);                    //get a mempage of page 0
 	page_no (*writePage)(page_no, void* page);              //write page into db file, if page is new, page_no == -1
 
 	int (*openDbFile)(char* file_name);						//open db file
@@ -30,7 +31,7 @@ typedef struct Pager{
 	int (*isTupleAccordWhere)(tuple* tuple_ptr, void* where); //it is used to judge if the tuple accord to where clause,return 0 is ok
 
 	void (*setPageModified)(void* page_ptr);                //set page to be modified
-	void (*updateMemPage)(void* memPage_ptr);               //if memPage is valid, return 0
+	void (*updateMemPage)(void* memPage_ptr);               //update page_space of memPage
 
 }Pager;
 

@@ -18,6 +18,7 @@ int main()
 	LOG(INFO, "summer test start!");
 	void *sql = NULL;
 	while(1){
+		printf("summer>");
 		sql = (void *)summerCompile();
 		assert(sql);
 		LOG(INFO, "compile complete!");

@@ -175,7 +175,7 @@ void * allocMemPoolPage(page_no n){
 print the allocation of the MemeryPool
 */
 void printMemPoolAlloc(){
-	if(p == NU LL){
+	if(p == NULL){
 		// prin tf("no MemoryPool !\n");
 		//LOG(DEBUG,"[内存池]，打印内存分配");
  		return;

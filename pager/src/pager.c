@@ -2,6 +2,7 @@
 #include "pageInt.h"
 #include "fileopInt.h"
 #include "memoryPoolInt.h"
+#include "btreeInt.h"
 
 /*
  * pager object for others to use
@@ -9,11 +10,26 @@
 Pager pager;
 
 /*
+ * to update the mem page, because its page_space may be invalid
+ */
+void pagerUpdateMemPage(void* memPage_ptr){
+	MemPage* page = (MemPage*)memPage_ptr;	
+	void* space = pager.getPage(page->pageno);
+	if(page->page_space == space){
+		return;
+	}
+	else{
+		page->page_space = space;
+	}
+}
+
+/*
  * create a pager to use
  */
 void summerPagerCreatePager(){
 	pager.getPage = allocMemPoolPage;
 	pager.getMemPage = getMemPage;
+	pager.getRootMemPage = getRootPage;
 	pager.writePage = summerPagerWrite;
 
 	pager.openDbFile = summerPagerOpenDbFile;
@@ -34,5 +50,5 @@ void summerPagerCreatePager(){
 	pager.isTupleAccordWhere = isTupleAccordWhere;
 
 	pager.setPageModified = setMemPoolFlag;
-	//pager.updateMemPage = ;
+	pager.updateMemPage = pagerUpdateMemPage;
 }

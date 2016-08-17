@@ -34,6 +34,7 @@ void btreeInitCursorSpec(){
 	int i = cursor->trace_index;
 	while(i > 1){
 		btreeFreeMemPage((cursor->trace)[i]);
+		i--;
 	}
 	cursor->trace_index = 1;
 }
@@ -47,6 +48,7 @@ void btreeInitCursorRoot(){
 	int i = cursor->trace_index;
 	while(i > 0){
 		btreeFreeMemPage((cursor->trace)[i]);
+		i--;
 	}
 	cursor->trace_index = 0;
 }
@@ -341,7 +343,8 @@ page_no btreeInsertSpecTuple(char* table_name, tuple* tuple_ptr){
 
 		if(insert_mem_page->header->fs_size >= 2 + tuple_ptr->size){       //we find the insert page
 			pager.insertTuple(insert_mem_page->page_space, tuple_ptr);
-			printf("insert page ptr: %p\n", insert_mem_page->page_space);
+			pager.setPageModified(insert_mem_page->page_space);
+			insert_mem_page->is_modify = 1;
 			return insert_mem_page->pageno;
 		}
 		else{
@@ -403,7 +406,7 @@ void summerBtreeCreateBtree(){
 	btShared->file_header = file_header;
 
 	//create root MemPage
-	MemPage* page0 = pager.getMemPage(root_page);
+	MemPage* page0 = pager.getRootMemPage(root_page);
 	page0->pageno = 0;
 
 	//create btree cursor
@@ -428,9 +431,10 @@ void summerBtreeDeleteBtree(){
 	free(global_btree->btShared->pager);
 	free(global_btree->btShared);
 
-	for(int i = 0; i <= global_btree->btCursor->trace_index; i++){
+	for(int i = 1; i <= global_btree->btCursor->trace_index; i++){
 		btreeFreeMemPage((global_btree->btCursor->trace)[i]);
 	}
+	free((global_btree->btCursor->trace)[0]);
 	free(global_btree->btCursor);
 	//free mem pool
 	freeMemPool();
