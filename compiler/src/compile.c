@@ -525,7 +525,7 @@ void * openStm(){
 	返回一个void *sql指针，指向识别之后的内存片
  */
 
-int main(){
+void *summerCompile(){
  	void * sql;
 	switch(yylex()){
  	 	case CREATE:{
@@ -561,7 +561,7 @@ int main(){
 	 		break;
 	   	}    
 	} 
-	// return sql;     
+	return sql;     
 }
 
 
